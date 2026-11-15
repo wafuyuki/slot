@@ -62,7 +62,7 @@ button:disabled{opacity:.35;cursor:not-allowed;transform:none}
 .czbtn.douran{border-color:#5fb39a;color:#5fb39a}
 .czpanel{border:2px solid var(--acc);border-radius:12px;padding:10px;background:#2a2416}
 .czpanel p{margin:0 0 8px;font-weight:bold}
-.res{min-height:56px;font-weight:bold}
+.res{min-height:56px;font-weight:bold;font-size:13px;line-height:1.3;word-break:break-word}
 .res.sun{border-color:var(--ok);color:var(--ok)}
 .res.kab{border-color:var(--acc);color:var(--acc)}
 .res.ng{border-color:var(--line);color:var(--mut)}
@@ -97,6 +97,12 @@ th{color:var(--mut);font-weight:normal;font-size:11.5px}
 @media(max-width:640px){.meta{grid-template-columns:1fr 1fr}}
 .meta label{display:flex;flex-direction:column;font-size:11.5px;color:var(--mut);gap:3px}
 .meta input{font:inherit;font-size:15px;background:var(--panel2);color:var(--tx);border:1px solid var(--line);border-radius:8px;padding:7px;width:100%;min-width:0;color-scheme:dark}
+.cnt{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px}
+@media(max-width:640px){.cnt{grid-template-columns:1fr}}
+.crow{display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid var(--line)}
+.crow .cl{flex:1;font-size:13px}
+.crow .cn{min-width:30px;text-align:center;font-weight:bold;font-size:17px;font-variant-numeric:tabular-nums}
+.crow .cp{min-width:60px}
 textarea{width:100%;height:160px;background:var(--panel2);color:var(--tx);border:1px solid var(--line);border-radius:8px;font-size:12px;margin-bottom:10px}
 </style>
 </head>
@@ -122,14 +128,20 @@ const AVG = { mumei:{n:72,y:32}, ikoma:{n:71,y:32} };
 const NAME = { mumei:'無名', ikoma:'生駒' };
 const REF_REACH = [['設定1〜3',84.7],['設定4',71.8],['設定5・6',62.6]];
 const REF_LIGHT = [['設定1〜3',12.6],['設定4',17.7],['設定5・6',20.0]];
-const RES_LABEL = { sun:'駿城ボーナス', kab:'KABANERI', ng:'非当選', czf:'CZ失敗' };
+const RES_LABEL = { sun:'駿城ボーナス', kab:'ST', ng:'非当選', czf:'CZ失敗' };
+const CHARA = ['女性','男性','美馬'];
+const VOICE = ['女性ボイス','女性ボイス（シュコンシュコン）','女性ボイス（おまんじゅうが食べたいな）','男性ボイス',
+  '男性ボイス（俺の誇れる俺になるんだあ）','男性ボイス（あの世でけいこを受けるといい）',
+  '景行（なぜ言わなかった、私をヒトだと！）','景行（私は・・・ヒトか、カバネか！？）','景行（今年は最後かな）',
+  '無名（やっぱりこの台・・・普通じゃないね）','ボイス無し'];
+const zeros = n => Array(n).fill(0);
 const CZ_KINDS = ['無名CZ','生駒CZ','銅藍CZ'];
 const routeLabel = x => x.route==='CZ' ? x.cz+'突破' : x.route==='天井' ? 'ゲーム数天井' : x.cycle+'周期当選';
 
 function blankSide(){ return {pt:0,none:0,unk:0,light:0,kk:0,combo:0,all:0,hint:null,kkOn:false}; }
 function today(){ const d = new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
 function blankMeta(){ return {date:today(),store:'',no:'',games:''}; }
-function blank(){ return {meta:blankMeta(),yugu:'none',sides:{mumei:blankSide(),ikoma:blankSide()},bell:0,history:[],cycle:1,cycleLog:[],cz:null}; }
+function blank(){ return {meta:blankMeta(),yugu:'none',sides:{mumei:blankSide(),ikoma:blankSide()},bell:0,history:[],cycle:1,cycleLog:[],cz:null,chara:zeros(CHARA.length),voice:zeros(VOICE.length)}; }
 
 let S = load();
 let undoStack = [];
@@ -137,7 +149,7 @@ let undoStack = [];
 function load(){
   try{
     const t = localStorage.getItem(KEY);
-    if(t){ const o = JSON.parse(t); const b = blank(); return Object.assign(b,o,{sides:Object.assign(b.sides,o.sides||{}),meta:Object.assign(b.meta,o.meta||{})}); }
+    if(t){ const o = JSON.parse(t); const b = blank(); return Object.assign(b,o,{sides:Object.assign(b.sides,o.sides||{}),meta:Object.assign(b.meta,o.meta||{}),chara:CHARA.map((_,i)=>(o.chara||[])[i]||0),voice:VOICE.map((_,i)=>(o.voice||[])[i]||0)}); }
   }catch(e){}
   return blank();
 }
@@ -196,7 +208,7 @@ function douran(){
 function czResult(r){
   act(() => {
     S.cycleLog.push({ cycle:S.cz.cycle, route:'CZ', cz:S.cz.kind, result:r, t:Date.now() });
-    if(r === 'kab') S.cycle = 1;          // KABANERI → 周期リセット
+    if(r === 'kab') S.cycle = 1;          // ST → 周期リセット
     // 駿城ボーナス・CZ失敗 → 同じ周期のまま継続
     S.cz = null;
   });
@@ -204,7 +216,7 @@ function czResult(r){
 function cycleResult(r){
   act(() => {
     S.cycleLog.push({ cycle:S.cycle, route:'周期', result:r, t:Date.now() });
-    if(r === 'kab') S.cycle = 1;                       // KABANERI → 1周期へ
+    if(r === 'kab') S.cycle = 1;                       // ST → 1周期へ
     else S.cycle = Math.min(6, S.cycle + 1);          // 駿城ボーナス・非当選 → 次周期へ
   });
 }
@@ -283,6 +295,12 @@ function card(side){
   </section>`;
 }
 
+function cntRow(g,i,label,n){
+  return `<div class="crow"><span class="cl">${label}</span>
+    <button class="sm" data-a="cnt" data-g="${g}" data-i="${i}" data-v="-1">−</button>
+    <span class="cn">${n}</span>
+    <button class="cp" data-a="cnt" data-g="${g}" data-i="${i}" data-v="1">＋1</button></div>`;
+}
 function render(){
   const m = S.sides.mumei, i = S.sides.ikoma;
   const p = (s, base) => s.kkOn ? base*2 : base;
@@ -298,10 +316,10 @@ function render(){
       <p>${S.cz.kind} 突入中（${S.cz.cycle}周期）— 結果を選択</p>
       <div class="grid3">
         <button class="res sun" data-a="czres" data-v="sun">CZ突破<br>駿城ボーナス</button>
-        <button class="res kab" data-a="czres" data-v="kab">CZ突破<br>KABANERI</button>
+        <button class="res kab" data-a="czres" data-v="kab">CZ突破<br>ST</button>
         <button class="res ng" data-a="czres" data-v="czf">CZ失敗</button>
       </div>
-      <div class="muted" style="margin-top:6px">駿城ボーナス・失敗 → ${S.cz.cycle}周期のまま継続／KABANERI → 1周期にリセット</div>
+      <div class="muted" style="margin-top:6px">駿城ボーナス・失敗 → ${S.cz.cycle}周期のまま継続／ST → 1周期にリセット</div>
     </div>`;
   }else{
     czArea = `<div class="grid3">
@@ -372,26 +390,26 @@ function render(){
     <h3>周期当選 <span><select data-c="setcycle" ${dis}>${[1,2,3,4,5,6].map(c=>`<option value="${c}" ${c===S.cycle?'selected':''}>${c}周期に修正</option>`).join('')}</select></span></h3>
     <div class="cyc"><div class="now">${S.cycle}<small>周期</small></div><div class="steps">${steps}</div></div>
     ${S.cycle===6 ? `
-    <button class="res kab" style="width:100%" data-a="cyc" data-v="kab" ${dis}>6周期到達 → KABANERI（ST）突入</button>` : `
+    <button class="res kab" style="width:100%" data-a="cyc" data-v="kab" ${dis}>6周期到達 → ST突入</button>` : `
     <div class="grid3">
       <button class="res sun" data-a="cyc" data-v="sun" ${dis}>当選<br>駿城ボーナス</button>
-      <button class="res kab" data-a="cyc" data-v="kab" ${dis}>当選<br>KABANERI</button>
+      <button class="res kab" data-a="cyc" data-v="kab" ${dis}>当選<br>ST</button>
       <button class="res ng" data-a="cyc" data-v="ng" ${dis}>非当選</button>
     </div>`}
-    <button class="res kab" style="width:100%;margin-top:8px;min-height:44px" data-a="tenjo" ${dis}>ゲーム数天井 → KABANERI（ST）突入</button>
-    <div class="muted" style="margin-top:6px">${S.cz?'CZの結果を入力すると周期の入力ができるようになります。':'駿城ボーナス・非当選 → 次の周期へ／KABANERI・天井 → 1周期へリセット（天井は周期当選率に含めません）'}</div>
+    <button class="res kab" style="width:100%;margin-top:8px;min-height:44px" data-a="tenjo" ${dis}>ゲーム数天井 → ST突入</button>
+    <div class="muted" style="margin-top:6px">${S.cz?'CZの結果を入力すると周期の入力ができるようになります。':'駿城ボーナス・非当選 → 次の周期へ／ST・天井 → 1周期へリセット（天井は周期当選率に含めません）'}</div>
     <div class="sum" style="margin-top:10px">
-      <div><span>当選回数（周期＋CZ突破＋天井）</span><b>${tt.win}回</b><span>駿城${tt.sun}・KABANERI${tt.st}</span></div>
+      <div><span>当選回数（周期＋CZ突破＋天井）</span><b>${tt.win}回</b><span>駿城${tt.sun}・ST${tt.st}</span></div>
       <div><span>ST突入回数</span><b>${tt.st}回</b><span>うち天井${tt.tenjo}回</span></div>
     </div>
 
     <h3 style="margin-top:14px">周期別の当選率（周期抽選のみ）</h3>
     <div class="tblw"><table>
-      <tr><th>周期</th><th>抽選</th><th>当選</th><th>当選率</th><th>駿城</th><th>KABANERI</th><th>CZ経由</th></tr>
+      <tr><th>周期</th><th>抽選</th><th>当選</th><th>当選率</th><th>駿城</th><th>ST</th><th>CZ経由</th></tr>
       ${statRows}
       <tr style="font-weight:bold"><td>合計</td><td>${totN}</td><td>${totW}</td><td>${fmt(pct(totW,totN))}</td><td>${cs.reduce((a,r)=>a+r.sun,0)}</td><td>${cs.reduce((a,r)=>a+r.kab,0)}</td><td>${cz.n}</td></tr>
     </table></div>
-    <div class="muted" style="margin-top:4px">CZ経由：${cz.n}回中 突破${cz.ok}回（${fmt(pct(cz.ok,cz.n))}）／内訳 駿城${cz.sun}・KABANERI${cz.kab}</div>
+    <div class="muted" style="margin-top:4px">CZ経由：${cz.n}回中 突破${cz.ok}回（${fmt(pct(cz.ok,cz.n))}）／内訳 駿城${cz.sun}・ST${cz.kab}</div>
 
     <h3 style="margin-top:14px">周期ログ</h3>
     <div class="tblw"><table>
@@ -412,6 +430,13 @@ function render(){
       ${histRows}
     </table></div>
     <div class="muted" style="margin-top:4px">* 銅藍CZは参考記録（平均到達率には含めません）</div>
+  </div>
+
+  <div class="box">
+    <h3>マイスロ記録：ボーナス中キャラ紹介 <span class="muted">計${S.chara.reduce((a,b)=>a+b,0)}回</span></h3>
+    <div class="cnt">${CHARA.map((n,i)=>cntRow('chara',i,n,S.chara[i])).join('')}</div>
+    <h3 style="margin-top:14px">マイスロ記録：ボーナス中ボイス示唆 <span class="muted">計${S.voice.reduce((a,b)=>a+b,0)}回</span></h3>
+    <div class="cnt">${VOICE.map((n,i)=>cntRow('voice',i,n,S.voice[i])).join('')}</div>
   </div>
 
   <div class="box notes">
@@ -460,6 +485,12 @@ function textOut(){
   L.push(`平均到達率：${fmt(ra)}（${nearest(ra,REF_REACH)}）`);
   L.push(`発光率：${fmt(lt.r)}（${lt.l}/${lt.l+lt.n}・${nearest(lt.r,REF_LIGHT)}）`);
   L.push(`下段ベル：${S.bell}回（${bellProb()}）`);
+  L.push('');
+  L.push('■ボーナス中キャラ紹介');
+  CHARA.forEach((n,i) => L.push(`${n}：${S.chara[i]}回`));
+  L.push('');
+  L.push('■ボーナス中ボイス示唆');
+  VOICE.forEach((n,i) => L.push(`${n}：${S.voice[i]}回`));
   return L.join('\n');
 }
 
@@ -482,6 +513,7 @@ document.addEventListener('click', async e => {
     case 'czres': czResult(v); break;
     case 'cyc': cycleResult(v); break;
     case 'tenjo': tenjo(); break;
+    case 'cnt': act(()=>{ const arr = S[b.dataset.g], i = Number(b.dataset.i); arr[i] = Math.max(0, arr[i] + Number(v)); }); break;
     case 'undo': if(undoStack.length){ S = JSON.parse(undoStack.pop()); save(); render(); } break;
     case 'copy': {
       const t = textOut();
