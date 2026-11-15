@@ -42,6 +42,7 @@ button:disabled{opacity:.35;cursor:not-allowed;transform:none}
 .sub{font-size:12px;color:var(--mut);margin:6px 0 8px}
 .hintline{font-size:12px;background:var(--panel2);border-radius:8px;padding:6px 8px;margin-bottom:8px;color:var(--acc)}
 .grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.grid2s{display:grid;grid-template-columns:1fr 1fr;gap:6px}
 .grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
 .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .cb{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:64px;padding:6px 4px;position:relative}
@@ -274,18 +275,19 @@ function card(side){
     const rem = Math.max(0, s.hint.r - (s.pt - s.hint.at));
     hint = `<div class="hintline">残り${s.hint.r}pt示唆（示唆時 ${s.hint.at}pt）→ 残り目安 ${rem}pt／推定規定 ${s.hint.at + s.hint.r}pt以上</div>`;
   }
-  const b = (k, label, p, cls='') =>
-    `<button class="cb ${cls}" data-a="single" data-side="${side}" data-k="${k}"><span class="n">${s[k]||''}</span><b>${label}</b><em>+${p}pt</em></button>`;
+  const b = (k, label, p, cls='', off=false) =>
+    `<button class="cb ${cls}" data-a="single" data-side="${side}" data-k="${k}" ${off?'disabled':''}><span class="n">${s[k]||''}</span><b>${label}</b><em>+${p}pt</em></button>`;
   return `<section class="card ${side}">
     <div class="ch"><h2>${NAME[side]}</h2>
       <label class="tg ${s.kkOn?'on':''}"><input type="checkbox" data-c="kk" data-side="${side}" ${s.kkOn?'checked':''}><span>高確（帯）</span></label></div>
     <div class="big"><span class="pt">${s.pt}</span><small>pt</small><span class="rate">${r.toFixed(1)}%</span></div>
     <div class="bar"><i style="width:${Math.min(100,r)}%"></i></div>
-    <div class="sub">平均規定 ${a}pt${S.yugu===side?'（優遇）':''}　発光率 ${fmt(lr)}（${s.light}/${s.light+s.none}）　複合${s.combo}・AS${s.all}</div>
+    <div class="sub">平均規定 ${a}pt${S.yugu===side?'（優遇）':''}　発光率 ${fmt(lr)}（${s.light}/${s.light+s.none}）　高確中${s.kk}・複合${s.combo}・AS${s.all}</div>
     ${hint}
     <div class="muted" style="margin-bottom:4px">単独チャンス目</div>
-    <div class="grid4">
-      ${b('none','発光なし',1)}${b('unk','発光不明',1)}${b('light','発光あり',10,'light')}${b('kk','高確中',10,'kk')}
+    <div class="grid2s">
+      ${b('none','発光なし',1,'',s.kkOn)}${b('unk','発光不明',1,'',s.kkOn)}
+      ${b('light','発光あり',10,'light',s.kkOn)}${b('kk','高確中',10,'kk',!s.kkOn)}
     </div>
     <div class="hrow">残りpt示唆
       <button class="sm" data-a="hint" data-side="${side}" data-v="60">残り60</button>
