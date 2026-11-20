@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>カバネリ海門決戦 CZポイント・周期カウンター</title>
+<style>
+:root{
+  --bg:#111315;--panel:#1b1e22;--panel2:#23272c;--line:#2f343b;--tx:#e9eaec;--mut:#9aa0a8;
+  --mumei:#e0607e;--ikoma:#4f9be0;--acc:#d9a441;--ok:#4cc38a;--ng:#e0605a;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:"Hiragino Sans","Noto Sans JP",system-ui,sans-serif;font-size:15px;line-height:1.5}
+.wrap{max-width:860px;margin:0 auto;padding:12px 12px 60px}
+header{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+h1{font-size:17px;margin:0;letter-spacing:.02em}
+h1 small{display:block;font-size:11px;color:var(--mut);font-weight:normal}
+.tools{display:flex;gap:6px}
+button{font:inherit;color:var(--tx);background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:8px 10px;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+button:active{transform:scale(.97)}
+button:disabled{opacity:.35;cursor:not-allowed;transform:none}
+.sm{font-size:12px;padding:6px 9px}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:12px}
+.box h3{margin:0 0 8px;font-size:14px;color:var(--acc);display:flex;justify-content:space-between;align-items:center}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg button.on{background:var(--acc);color:#1a1a1a;border-color:var(--acc);font-weight:bold}
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+@media(max-width:640px){.cards{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px;border-top:4px solid var(--c)}
+.card.mumei{--c:var(--mumei)}.card.ikoma{--c:var(--ikoma)}
+.ch{display:flex;justify-content:space-between;align-items:center}
+.ch h2{margin:0;font-size:18px;color:var(--c)}
+.tg{display:flex;align-items:center;gap:6px;font-size:13px;background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:4px 10px;cursor:pointer}
+.tg input{accent-color:var(--c);width:16px;height:16px}
+.tg.on{border-color:var(--c);color:var(--c);font-weight:bold}
+.big{display:flex;align-items:baseline;gap:4px;margin:6px 0 4px}
+.big .pt{font-size:40px;font-weight:bold;font-variant-numeric:tabular-nums}
+.big small{color:var(--mut)}
+.big .rate{margin-left:auto;font-size:22px;font-weight:bold;color:var(--c);font-variant-numeric:tabular-nums}
+.bar{height:10px;background:var(--panel2);border-radius:99px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--c);border-radius:99px;transition:width .2s}
+.sub{font-size:12px;color:var(--mut);margin:6px 0 8px}
+.hintline{font-size:12px;background:var(--panel2);border-radius:8px;padding:6px 8px;margin-bottom:8px;color:var(--acc)}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.grid2s{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.cb{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:64px;padding:6px 4px;position:relative}
+.cb b{font-size:13px}
+.cb em{font-style:normal;font-size:11px;color:var(--mut)}
+.cb .n{position:absolute;top:3px;right:5px;font-size:11px;color:var(--c,var(--acc));font-weight:bold}
+.cb.light{border-color:#8a7a3a}
+.cb.kk{border-color:var(--c)}
+.hrow{display:flex;gap:6px;align-items:center;margin-top:8px;font-size:12px;color:var(--mut)}
+.hrow button{flex:1}
+.combo .cb{min-height:58px}
+.combo .cb .to{font-size:11px;color:var(--mut)}
+.bell{display:flex;align-items:center;gap:10px;margin-top:10px}
+.bell .num{font-size:22px;font-weight:bold;min-width:40px;text-align:center}
+.czbtn{min-height:56px;font-weight:bold}
+.czbtn.mumei{border-color:var(--mumei);color:var(--mumei)}
+.czbtn.ikoma{border-color:var(--ikoma);color:var(--ikoma)}
+.czbtn.douran{border-color:#5fb39a;color:#5fb39a}
+.czpanel{border:2px solid var(--acc);border-radius:12px;padding:10px;background:#2a2416}
+.czpanel p{margin:0 0 8px;font-weight:bold}
+.res{min-height:56px;font-weight:bold;font-size:13px;line-height:1.3;word-break:break-word}
+.res.sun{border-color:var(--ok);color:var(--ok)}
+.res.kab{border-color:var(--acc);color:var(--acc)}
+.res.ng{border-color:var(--line);color:var(--mut)}
+.cyc{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.cyc .now{font-size:34px;font-weight:bold;color:var(--acc);font-variant-numeric:tabular-nums}
+.cyc .now small{font-size:15px;color:var(--tx)}
+.steps{display:flex;gap:4px;flex:1}
+.steps span{flex:1;text-align:center;font-size:12px;padding:4px 0;border-radius:6px;background:var(--panel2);color:var(--mut)}
+.steps span.on{background:var(--acc);color:#1a1a1a;font-weight:bold}
+select{font:inherit;background:var(--panel2);color:var(--tx);border:1px solid var(--line);border-radius:8px;padding:5px}
+table{width:100%;border-collapse:collapse;font-size:12.5px;font-variant-numeric:tabular-nums}
+th,td{padding:6px 5px;border-bottom:1px solid var(--line);text-align:center;white-space:nowrap}
+th{color:var(--mut);font-weight:normal;font-size:11.5px}
+.tblw{overflow-x:auto}
+.tag{display:inline-block;padding:1px 6px;border-radius:6px;font-size:11px;background:var(--panel2)}
+.tag.sun{color:var(--ok)}.tag.kab{color:var(--acc)}.tag.ng{color:var(--mut)}.tag.czf{color:var(--ng)}
+.tag.mumei{color:var(--mumei)}.tag.ikoma{color:var(--ikoma)}
+.muted{color:var(--mut);font-size:12px}
+.sum{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-bottom:10px}
+.sum div{background:var(--panel2);border-radius:10px;padding:8px}
+.sum b{display:block;font-size:18px}
+.sum span{font-size:11px;color:var(--mut)}
+.notes{font-size:11.5px;color:var(--mut)}
+.notes li{margin-bottom:3px}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:10}
+.modal.show{display:flex}
+.modal .in{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;width:min(340px,90vw)}
+.modal .in p{margin:0 0 14px}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--acc);color:#1a1a1a;padding:8px 14px;border-radius:99px;font-weight:bold;opacity:0;transition:opacity .2s;pointer-events:none;z-index:11}
+.toast.show{opacity:1}
+.meta{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+@media(max-width:640px){.meta{grid-template-columns:1fr 1fr}}
+.meta label{display:flex;flex-direction:column;font-size:11.5px;color:var(--mut);gap:3px}
+.meta input{font:inherit;font-size:15px;background:var(--panel2);color:var(--tx);border:1px solid var(--line);border-radius:8px;padding:7px;width:100%;min-width:0;color-scheme:dark}
+.cnt{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px}
+@media(max-width:640px){.cnt{grid-template-columns:1fr}}
+.crow{display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid var(--line)}
+.crow .cl{flex:1;font-size:13px}
+.crow .cn{min-width:30px;text-align:center;font-weight:bold;font-size:17px;font-variant-numeric:tabular-nums}
+.crow .cp{min-width:60px}
+textarea{width:100%;height:160px;background:var(--panel2);color:var(--tx);border:1px solid var(--line);border-radius:8px;font-size:12px;margin-bottom:10px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>カバネリ海門決戦 CZポイント・周期カウンター<small>チャンス目からCZまでの進み具合を推定し、周期当選を記録</small></h1>
+    <div class="tools">
+      <button class="sm" data-a="undo" id="undoBtn">↶ 1つ戻す</button>
+      <button class="sm" data-a="copy">テキストコピー</button>
+      <button class="sm" data-a="clearAsk">全クリア</button>
+    </div>
+  </header>
+  <div id="app"></div>
+</div>
+
+<div class="modal" id="modal"><div class="in" id="modalIn"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const KEY = 'kabaneri-unato-cz-cycle-v1';
+const AVG = { mumei:{n:72,y:32}, ikoma:{n:71,y:32} };
+const NAME = { mumei:'無名', ikoma:'生駒' };
+const REF_REACH = [['設定1〜3',84.7],['設定4',71.8],['設定5・6',62.6]];
+const REF_LIGHT = [['設定1〜3',12.6],['設定4',17.7],['設定5・6',20.0]];
+const RES_LABEL = { sun:'駿城ボーナス', kab:'ST', ng:'非当選', czf:'CZ失敗' };
+const CHARA = ['女性','男性','美馬'];
+const VOICE = ['女性ボイス','女性ボイス（シュコンシュコン）','女性ボイス（おまんじゅうが食べたいな）','男性ボイス',
+  '男性ボイス（俺の誇れる俺になるんだあ）','男性ボイス（あの世でけいこを受けるといい）',
+  '景行（なぜ言わなかった、私をヒトだと！）','景行（私は・・・ヒトか、カバネか！？）','景行（今年は最後かな）',
+  '無名（やっぱりこの台・・・普通じゃないね）','ボイス無し'];
+const zeros = n => Array(n).fill(0);
+const CZ_KINDS = ['無名CZ','生駒CZ','銅藍CZ'];
+const routeLabel = x => x.route==='CZ' ? x.cz+'突破' : x.route==='天井' ? 'ゲーム数天井' : x.cycle+'周期当選';
+
+function blankSide(){ return {pt:0,none:0,unk:0,light:0,kk:0,combo:0,all:0,hint:null,kkOn:false}; }
+function today(){ const d = new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function blankMeta(){ return {date:today(),store:'',no:'',games:''}; }
+function blank(){ return {meta:blankMeta(),yugu:'none',sides:{mumei:blankSide(),ikoma:blankSide()},bell:0,history:[],cycle:1,cycleLog:[],cz:null,chara:zeros(CHARA.length),voice:zeros(VOICE.length)}; }
+
+let S = load();
+let undoStack = [];
+
+function load(){
+  try{
+    const t = localStorage.getItem(KEY);
+    if(t){ const o = JSON.parse(t); const b = blank(); return Object.assign(b,o,{sides:Object.assign(b.sides,o.sides||{}),meta:Object.assign(b.meta,o.meta||{}),chara:CHARA.map((_,i)=>(o.chara||[])[i]||0),voice:VOICE.map((_,i)=>(o.voice||[])[i]||0)}); }
+  }catch(e){}
+  return blank();
+}
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
+function act(fn){
+  undoStack.push(JSON.stringify(S));
+  if(undoStack.length > 200) undoStack.shift();
+  fn(); save(); render();
+}
+
+const avgOf = side => S.yugu === side ? AVG[side].y : AVG[side].n;
+const rateOf = side => S.sides[side].pt / avgOf(side) * 100;
+const pct = (a,b) => b > 0 ? a / b * 100 : null;
+const fmt = v => v == null ? '—' : v.toFixed(1) + '%';
+function nearest(v, refs){
+  if(v == null) return '—';
+  let best = refs[0], d = Infinity;
+  refs.forEach(r => { const x = Math.abs(r[1]-v); if(x < d){ d = x; best = r; } });
+  return best[0] + '寄り';
+}
+
+/* ---------- アクション ---------- */
+function single(side, k){
+  act(() => { const s = S.sides[side]; s[k]++; s.pt += (k==='none'||k==='unk') ? 1 : 10; });
+}
+function combo(type){
+  act(() => {
+    const add = (side, base, key) => { const s = S.sides[side]; s.pt += s.kkOn ? base*2 : base; s[key]++; };
+    if(type==='mi'){ add('mumei',10,'combo'); add('ikoma',10,'combo'); }
+    if(type==='all'){ add('mumei',30,'all'); add('ikoma',30,'all'); }
+    if(type==='mk'){ add('mumei',10,'combo'); }
+    if(type==='ki'){ add('ikoma',10,'combo'); }
+  });
+}
+function pushHist(side, kind, counted){
+  const s = S.sides[side];
+  S.history.push({ kind, side, pt:s.pt, avg:avgOf(side), rate:rateOf(side), light:s.light, none:s.none, unk:s.unk,
+    yugu:S.yugu, cycle:S.cycle, counted, t:Date.now() });
+}
+function resetSide(side){ S.sides[side] = blankSide(); }
+function czWin(side){
+  act(() => {
+    pushHist(side, NAME[side]+'CZ', true);
+    resetSide(side);
+    S.cz = { kind:NAME[side]+'CZ', side, cycle:S.cycle };
+  });
+}
+function douran(){
+  act(() => {
+    const side = rateOf('mumei') >= rateOf('ikoma') ? 'mumei' : 'ikoma';
+    pushHist(side, '銅藍CZ（'+NAME[side]+'寄り）', false);
+    resetSide(side);
+    S.cz = { kind:'銅藍CZ', side, cycle:S.cycle };
+  });
+}
+function czResult(r){
+  act(() => {
+    S.cycleLog.push({ cycle:S.cz.cycle, route:'CZ', cz:S.cz.kind, result:r, t:Date.now() });
+    if(r === 'kab') S.cycle = 1;          // ST → 周期リセット
+    // 駿城ボーナス・CZ失敗 → 同じ周期のまま継続
+    S.cz = null;
+  });
+}
+function cycleResult(r){
+  act(() => {
+    S.cycleLog.push({ cycle:S.cycle, route:'周期', result:r, t:Date.now() });
+    if(r === 'kab') S.cycle = 1;                       // ST → 1周期へ
+    else S.cycle = Math.min(6, S.cycle + 1);          // 駿城ボーナス・非当選 → 次周期へ
+  });
+}
+function tenjo(){
+  act(() => {
+    S.cycleLog.push({ cycle:S.cycle, route:'天井', result:'kab', t:Date.now() });
+    S.cycle = 1;
+  });
+}
+
+/* ---------- 集計 ---------- */
+function cycleStats(){
+  const rows = [];
+  for(let c=1;c<=6;c++){
+    const L = S.cycleLog.filter(x => x.route==='周期' && x.cycle===c);
+    const sun = L.filter(x=>x.result==='sun').length, kab = L.filter(x=>x.result==='kab').length;
+    const czL = S.cycleLog.filter(x => x.route==='CZ' && x.cycle===c);
+    rows.push({ c, n:L.length, win:sun+kab, sun, kab, cz:czL.length });
+  }
+  return rows;
+}
+function czStats(kind){
+  const L = S.cycleLog.filter(x=>x.route==='CZ' && (!kind || x.cz===kind));
+  const sun = L.filter(x=>x.result==='sun').length, kab = L.filter(x=>x.result==='kab').length;
+  return { n:L.length, ok:sun+kab, sun, kab };
+}
+function totals(){
+  const W = S.cycleLog.filter(x => x.result==='sun' || x.result==='kab');
+  return { win:W.length, st:W.filter(x=>x.result==='kab').length, sun:W.filter(x=>x.result==='sun').length,
+           tenjo:S.cycleLog.filter(x=>x.route==='天井').length, wins:W };
+}
+function bellProb(){
+  const g = Number(S.meta.games);
+  if(!(g > 0)) return '総G未入力';
+  if(!S.bell) return '—';
+  return '1/' + (g / S.bell).toFixed(1);
+}
+function lightTotal(){
+  let l=0,n=0;
+  S.history.forEach(h => { l += h.light; n += h.none; });
+  ['mumei','ikoma'].forEach(k => { l += S.sides[k].light; n += S.sides[k].none; });
+  return { l, n, r:pct(l, l+n) };
+}
+function reachAvg(){
+  const H = S.history.filter(h => h.counted);
+  if(!H.length) return null;
+  return H.reduce((a,h)=>a+h.rate,0) / H.length;
+}
+
+/* ---------- 描画 ---------- */
+function card(side){
+  const s = S.sides[side], a = avgOf(side), r = rateOf(side), lr = pct(s.light, s.light+s.none);
+  let hint = '';
+  if(s.hint){
+    const rem = Math.max(0, s.hint.r - (s.pt - s.hint.at));
+    hint = `<div class="hintline">残り${s.hint.r}pt示唆（示唆時 ${s.hint.at}pt）→ 残り目安 ${rem}pt／推定規定 ${s.hint.at + s.hint.r}pt以上</div>`;
+  }
+  const b = (k, label, p, cls='', off=false) =>
+    `<button class="cb ${cls}" data-a="single" data-side="${side}" data-k="${k}" ${off?'disabled':''}><span class="n">${s[k]||''}</span><b>${label}</b><em>+${p}pt</em></button>`;
+  return `<section class="card ${side}">
+    <div class="ch"><h2>${NAME[side]}</h2>
+      <label class="tg ${s.kkOn?'on':''}"><input type="checkbox" data-c="kk" data-side="${side}" ${s.kkOn?'checked':''}><span>高確（帯）</span></label></div>
+    <div class="big"><span class="pt">${s.pt}</span><small>pt</small><span class="rate">${r.toFixed(1)}%</span></div>
+    <div class="bar"><i style="width:${Math.min(100,r)}%"></i></div>
+    <div class="sub">平均規定 ${a}pt${S.yugu===side?'（優遇）':''}　発光率 ${fmt(lr)}（${s.light}/${s.light+s.none}）　高確中${s.kk}・複合${s.combo}・AS${s.all}</div>
+    ${hint}
+    <div class="muted" style="margin-bottom:4px">単独チャンス目</div>
+    <div class="grid2s">
+      ${b('none','発光なし',1,'',s.kkOn)}${b('unk','発光不明',1,'',s.kkOn)}
+      ${b('light','発光あり',10,'light',s.kkOn)}${b('kk','高確中',10,'kk',!s.kkOn)}
+    </div>
+    <div class="hrow">残りpt示唆
+      <button class="sm" data-a="hint" data-side="${side}" data-v="60">残り60</button>
+      <button class="sm" data-a="hint" data-side="${side}" data-v="15">残り15</button>
+      <button class="sm" data-a="hint" data-side="${side}" data-v="0" ${s.hint?'':'disabled'}>解除</button>
+    </div>
+  </section>`;
+}
+
+function cntRow(g,i,label,n){
+  return `<div class="crow"><span class="cl">${label}</span>
+    <button class="sm" data-a="cnt" data-g="${g}" data-i="${i}" data-v="-1">−</button>
+    <span class="cn">${n}</span>
+    <button class="cp" data-a="cnt" data-g="${g}" data-i="${i}" data-v="1">＋1</button></div>`;
+}
+function render(){
+  const m = S.sides.mumei, i = S.sides.ikoma;
+  const p = (s, base) => s.kkOn ? base*2 : base;
+  const cs = cycleStats(), cz = czStats(), lt = lightTotal(), ra = reachAvg();
+  const totN = cs.reduce((a,r)=>a+r.n,0), totW = cs.reduce((a,r)=>a+r.win,0);
+  const tt = totals();
+  const M = S.meta;
+  const esc = v => String(v??'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+
+  let czArea;
+  if(S.cz){
+    czArea = `<div class="czpanel">
+      <p>${S.cz.kind} 突入中（${S.cz.cycle}周期）— 結果を選択</p>
+      <div class="grid3">
+        <button class="res sun" data-a="czres" data-v="sun">CZ突破<br>駿城ボーナス</button>
+        <button class="res kab" data-a="czres" data-v="kab">CZ突破<br>ST</button>
+        <button class="res ng" data-a="czres" data-v="czf">CZ失敗</button>
+      </div>
+      <div class="muted" style="margin-top:6px">駿城ボーナス・失敗 → ${S.cz.cycle}周期のまま継続／ST → 1周期にリセット</div>
+    </div>`;
+  }else{
+    czArea = `<div class="grid3">
+      <button class="czbtn mumei" data-a="czwin" data-side="mumei">無名CZ 当選</button>
+      <button class="czbtn ikoma" data-a="czwin" data-side="ikoma">生駒CZ 当選</button>
+      <button class="czbtn douran" data-a="douran">銅藍CZ 突入</button>
+    </div>
+    <div class="muted" style="margin-top:6px">当選した側のptを履歴に保存してリセット → 続けてCZの結果を入力します。銅藍CZは進んでいた側を参考記録として残し、到達率の集計からは外します。</div>`;
+  }
+
+  const steps = [1,2,3,4,5,6].map(c => `<span class="${c===S.cycle?'on':''}">${c}</span>`).join('');
+  const dis = S.cz ? 'disabled' : '';
+
+  const logRows = S.cycleLog.slice().reverse().slice(0,40).map((x,idx) => {
+    const no = S.cycleLog.length - idx;
+    const route = x.route==='CZ' ? `CZ経由<br><span class="muted">${x.cz}</span>` : x.route==='天井' ? 'ゲーム数天井' : '周期抽選';
+    return `<tr><td>${no}</td><td>${x.cycle}周期</td><td>${route}</td><td><span class="tag ${x.result}">${RES_LABEL[x.result]}</span></td></tr>`;
+  }).join('') || `<tr><td colspan="4" class="muted">まだ記録はありません</td></tr>`;
+
+  const statRows = cs.map(r => `<tr><td>${r.c}周期</td><td>${r.n}</td><td>${r.win}</td><td>${fmt(pct(r.win,r.n))}</td><td>${r.sun}</td><td>${r.kab}</td><td>${r.cz}</td></tr>`).join('');
+
+  const histRows = S.history.slice().reverse().map((h,idx) => {
+    const no = S.history.length - idx;
+    return `<tr${h.counted?'':' style="opacity:.6"'}><td>${no}</td><td><span class="tag ${h.side}">${h.kind}</span></td><td>${h.cycle}周期</td><td>${h.pt}pt</td><td>${h.rate.toFixed(1)}%${h.counted?'':'*'}</td><td>${h.light}/${h.light+h.none}</td><td>${h.yugu==='none'?'—':NAME[h.yugu]+'優遇'}</td></tr>`;
+  }).join('') || `<tr><td colspan="7" class="muted">まだ履歴はありません</td></tr>`;
+
+  document.getElementById('app').innerHTML = `
+  <div class="box">
+    <h3>実践情報</h3>
+    <div class="meta">
+      <label>日付<input type="date" data-m="date" value="${esc(M.date)}"></label>
+      <label>店舗名<input type="text" data-m="store" value="${esc(M.store)}" placeholder="例：〇〇店"></label>
+      <label>台番号<input type="text" data-m="no" value="${esc(M.no)}" placeholder="例：123"></label>
+      <label>総ゲーム数<input type="number" inputmode="numeric" data-m="games" value="${esc(M.games)}" placeholder="例：4500"></label>
+    </div>
+  </div>
+
+  <div class="box">
+    <h3>優遇CZ（ST終了後の輪廻くじ示唆）</h3>
+    <div class="seg">
+      <button data-a="yugu" data-v="none" class="${S.yugu==='none'?'on':''}">非優遇・不明</button>
+      <button data-a="yugu" data-v="mumei" class="${S.yugu==='mumei'?'on':''}">無名優遇</button>
+      <button data-a="yugu" data-v="ikoma" class="${S.yugu==='ikoma'?'on':''}">生駒優遇</button>
+    </div>
+  </div>
+
+  <div class="cards">${card('mumei')}${card('ikoma')}</div>
+
+  <div class="box combo">
+    <h3>複合・オールスター目</h3>
+    <div class="grid2">
+      <button class="cb" data-a="combo" data-v="mi"><b>複合（無名＆生駒）</b><span class="to">無名+${p(m,10)}／生駒+${p(i,10)}</span></button>
+      <button class="cb" data-a="combo" data-v="all"><b>オールスター目</b><span class="to">無名+${p(m,30)}／生駒+${p(i,30)}</span></button>
+      <button class="cb" data-a="combo" data-v="mk"><b>複合（無名＆カバネ）</b><span class="to">無名+${p(m,10)}</span></button>
+      <button class="cb" data-a="combo" data-v="ki"><b>複合（カバネ＆生駒）</b><span class="to">生駒+${p(i,10)}</span></button>
+    </div>
+    <div class="bell"><span class="muted">下段ベル</span>
+      <button class="sm" data-a="bell" data-v="-1">−</button><span class="num">${S.bell}</span><button data-a="bell" data-v="1">＋1</button>
+      <span class="muted">確率 <b class="bellp" style="color:var(--tx)">${bellProb()}</b></span></div>
+  </div>
+
+  <div class="box">
+    <h3>CZ当選</h3>
+    ${czArea}
+  </div>
+
+  <div class="box">
+    <h3>周期当選 <span><select data-c="setcycle" ${dis}>${[1,2,3,4,5,6].map(c=>`<option value="${c}" ${c===S.cycle?'selected':''}>${c}周期に修正</option>`).join('')}</select></span></h3>
+    <div class="cyc"><div class="now">${S.cycle}<small>周期</small></div><div class="steps">${steps}</div></div>
+    ${S.cycle===6 ? `
+    <button class="res kab" style="width:100%" data-a="cyc" data-v="kab" ${dis}>6周期到達 → ST突入</button>` : `
+    <div class="grid3">
+      <button class="res sun" data-a="cyc" data-v="sun" ${dis}>当選<br>駿城ボーナス</button>
+      <button class="res kab" data-a="cyc" data-v="kab" ${dis}>当選<br>ST</button>
+      <button class="res ng" data-a="cyc" data-v="ng" ${dis}>非当選</button>
+    </div>`}
+    <button class="res kab" style="width:100%;margin-top:8px;min-height:44px" data-a="tenjo" ${dis}>ゲーム数天井 → ST突入</button>
+    <div class="muted" style="margin-top:6px">${S.cz?'CZの結果を入力すると周期の入力ができるようになります。':'駿城ボーナス・非当選 → 次の周期へ／ST・天井 → 1周期へリセット（天井は周期当選率に含めません）'}</div>
+    <div class="sum" style="margin-top:10px">
+      <div><span>当選回数（周期＋CZ突破＋天井）</span><b>${tt.win}回</b><span>駿城${tt.sun}・ST${tt.st}</span></div>
+      <div><span>ST突入回数</span><b>${tt.st}回</b><span>うち天井${tt.tenjo}回</span></div>
+    </div>
+
+    <h3 style="margin-top:14px">周期別の当選率（周期抽選のみ）</h3>
+    <div class="tblw"><table>
+      <tr><th>周期</th><th>抽選</th><th>当選</th><th>当選率</th><th>駿城</th><th>ST</th><th>CZ経由</th></tr>
+      ${statRows}
+      <tr style="font-weight:bold"><td>合計</td><td>${totN}</td><td>${totW}</td><td>${fmt(pct(totW,totN))}</td><td>${cs.reduce((a,r)=>a+r.sun,0)}</td><td>${cs.reduce((a,r)=>a+r.kab,0)}</td><td>${cz.n}</td></tr>
+    </table></div>
+    <div class="muted" style="margin-top:4px">CZ経由：${cz.n}回中 突破${cz.ok}回（${fmt(pct(cz.ok,cz.n))}）／内訳 駿城${cz.sun}・ST${cz.kab}</div>
+
+    <h3 style="margin-top:14px">周期ログ</h3>
+    <div class="tblw"><table>
+      <tr><th>#</th><th>周期</th><th>経路</th><th>結果</th></tr>
+      ${logRows}
+    </table></div>
+  </div>
+
+  <div class="box">
+    <h3>CZ履歴・サマリー</h3>
+    <div class="sum">
+      <div><span>平均到達率（${S.history.filter(h=>h.counted).length}回）</span><b>${fmt(ra)}</b><span>${nearest(ra, REF_REACH)}</span></div>
+      <div><span>発光率（履歴＋現在 ${lt.l}/${lt.l+lt.n}）</span><b>${fmt(lt.r)}</b><span>${nearest(lt.r, REF_LIGHT)}</span></div>
+      <div><span>下段ベル（${S.bell}回）</span><b class="bellp">${bellProb()}</b><span>総ゲーム数 ÷ 下段ベル回数</span></div>
+    </div>
+    <div class="tblw"><table>
+      <tr><th>#</th><th>種別</th><th>周期</th><th>獲得pt</th><th>到達率</th><th>発光</th><th>優遇</th></tr>
+      ${histRows}
+    </table></div>
+    <div class="muted" style="margin-top:4px">* 銅藍CZは参考記録（平均到達率には含めません）</div>
+  </div>
+
+  <div class="box">
+    <h3>マイスロ記録：ボーナス中キャラ紹介 <span class="muted">計${S.chara.reduce((a,b)=>a+b,0)}回</span></h3>
+    <div class="cnt">${CHARA.map((n,i)=>cntRow('chara',i,n,S.chara[i])).join('')}</div>
+    <h3 style="margin-top:14px">マイスロ記録：ボーナス中ボイス示唆 <span class="muted">計${S.voice.reduce((a,b)=>a+b,0)}回</span></h3>
+    <div class="cnt">${VOICE.map((n,i)=>cntRow('voice',i,n,S.voice[i])).join('')}</div>
+  </div>
+
+  <div class="box notes">
+    <ul>
+      <li>累計ptは最低減算ptの積み上げです。単独：発光なし・不明 1pt／発光あり・高確中 10pt。複合 10pt・オールスター 30pt（その側が高確中なら2倍）。</li>
+      <li>平均規定pt：無名 72pt（優遇 32pt）、生駒 71pt（優遇 32pt）。到達率＝累計pt÷平均規定pt。</li>
+      <li>目安　到達率：設定1〜3 約84.7%／設定4 約71.8%／設定5・6 約62.6%。発光率：設定1〜3 約12.6%／設定4 約17.7%／設定5・6 約20.0%。低到達・高発光ほど高設定寄り。</li>
+      <li>発光率は通常時・非高確の単独チャンス目（発光あり÷(発光あり＋発光なし)）。「発光不明」は含めません。</li>
+      <li>ボーナス・周期による直撃当選ではCZ抽選がないので、ptはそのまま数え続けます。</li>
+      <li>数値の多くは前作の公表値からの推定による参考値です。データはこのブラウザ内にのみ保存されます。</li>
+    </ul>
+  </div>`;
+
+  document.getElementById('undoBtn').disabled = undoStack.length === 0;
+}
+
+/* ---------- テキスト出力 ---------- */
+function textOut(){
+  const cs = cycleStats(), lt = lightTotal(), ra = reachAvg(), tt = totals(), M = S.meta;
+  const cyW = cs.reduce((a,r)=>a+r.win,0), czOk = czStats().ok;
+  const L = [];
+  L.push('【カバネリ海門決戦 実践記録】');
+  L.push(`日付：${M.date ? M.date.replace(/-/g,'/') : '—'}`);
+  L.push(`店舗名：${M.store || '—'}`);
+  L.push(`台番号：${M.no || '—'}`);
+  L.push(`総ゲーム数：${M.games ? M.games + 'G' : '—'}`);
+  L.push(`当選回数：${tt.win}回（周期${cyW}・CZ${czOk}・天井${tt.tenjo}）`);
+  L.push(`ST突入回数：${tt.st}回`);
+  L.push('');
+  L.push('■当選履歴');
+  if(!tt.wins.length) L.push('なし');
+  tt.wins.forEach((x,n) => {
+    const where = x.route==='周期' ? `${x.cycle}周期当選` : x.route==='CZ' ? `${x.cz}突破（${x.cycle}周期）` : `ゲーム数天井（${x.cycle}周期）`;
+    L.push(`${n+1}. ${where} → ${RES_LABEL[x.result]}`);
+  });
+  L.push('');
+  L.push('■周期当選率');
+  cs.forEach(r => L.push(`${r.c}周期当選率　${r.win}/${r.n}　当選率${r.n ? (r.win/r.n*100).toFixed(1)+'%' : '—'}`));
+  L.push('※CZ経由・ゲーム数天井での当選は含まない');
+  L.push('');
+  L.push('■CZ成功率');
+  CZ_KINDS.forEach(k => { const c = czStats(k);
+    L.push(`${k}　${c.ok}/${c.n}　成功率${c.n ? (c.ok/c.n*100).toFixed(1)+'%' : '—'}`); });
+  L.push('');
+  L.push('■CZポイント（参考）');
+  L.push(`平均到達率：${fmt(ra)}（${nearest(ra,REF_REACH)}）`);
+  L.push(`発光率：${fmt(lt.r)}（${lt.l}/${lt.l+lt.n}・${nearest(lt.r,REF_LIGHT)}）`);
+  L.push(`下段ベル：${S.bell}回（${bellProb()}）`);
+  L.push('');
+  L.push('■ボーナス中キャラ紹介');
+  CHARA.forEach((n,i) => L.push(`${n}：${S.chara[i]}回`));
+  L.push('');
+  L.push('■ボーナス中ボイス示唆');
+  VOICE.forEach((n,i) => L.push(`${n}：${S.voice[i]}回`));
+  return L.join('\n');
+}
+
+/* ---------- UI ---------- */
+function toast(t){ const el = document.getElementById('toast'); el.textContent = t; el.classList.add('show'); setTimeout(()=>el.classList.remove('show'),1400); }
+function modal(html){ document.getElementById('modalIn').innerHTML = html; document.getElementById('modal').classList.add('show'); }
+function closeModal(){ document.getElementById('modal').classList.remove('show'); }
+
+document.addEventListener('click', async e => {
+  const b = e.target.closest('[data-a]'); if(!b || b.disabled) return;
+  const a = b.dataset.a, side = b.dataset.side, v = b.dataset.v;
+  switch(a){
+    case 'single': single(side, b.dataset.k); break;
+    case 'combo': combo(v); break;
+    case 'bell': act(()=>{ S.bell = Math.max(0, S.bell + Number(v)); }); break;
+    case 'yugu': act(()=>{ S.yugu = v; }); break;
+    case 'hint': act(()=>{ const s = S.sides[side]; s.hint = Number(v) ? {r:Number(v), at:s.pt} : null; }); break;
+    case 'czwin': czWin(side); break;
+    case 'douran': douran(); break;
+    case 'czres': czResult(v); break;
+    case 'cyc': cycleResult(v); break;
+    case 'tenjo': tenjo(); break;
+    case 'cnt': act(()=>{ const arr = S[b.dataset.g], i = Number(b.dataset.i); arr[i] = Math.max(0, arr[i] + Number(v)); }); break;
+    case 'undo': if(undoStack.length){ S = JSON.parse(undoStack.pop()); save(); render(); } break;
+    case 'copy': {
+      const t = textOut();
+      try{ await navigator.clipboard.writeText(t); toast('コピーしました'); }
+      catch(err){ modal(`<p>自動コピーできませんでした。下の文字を長押しでコピーしてください。</p><textarea readonly>${t.replace(/</g,'&lt;')}</textarea><button data-a="close">閉じる</button>`); }
+      break; }
+    case 'clearAsk':
+      modal(`<p>すべてのデータ（pt・周期ログ・履歴）を消去します。よろしいですか？</p><div class="grid2"><button data-a="close">やめる</button><button data-a="clear" style="border-color:var(--ng);color:var(--ng)">消去する</button></div>`);
+      break;
+    case 'clear': act(()=>{ S = blank(); }); closeModal(); toast('クリアしました'); break;
+    case 'close': closeModal(); break;
+  }
+});
+document.addEventListener('input', e => {
+  const k = e.target.dataset && e.target.dataset.m;
+  if(k){ S.meta[k] = e.target.value; save(); if(k==='games') document.querySelectorAll('.bellp').forEach(el => el.textContent = bellProb()); }
+});
+document.addEventListener('change', e => {
+  const el = e.target;
+  if(el.dataset.c === 'kk'){ const side = el.dataset.side; act(()=>{ S.sides[side].kkOn = el.checked; }); }
+  if(el.dataset.c === 'setcycle'){ act(()=>{ S.cycle = Number(el.value); }); }
+});
+
+render();
+</script>
+</body>
+</html>
