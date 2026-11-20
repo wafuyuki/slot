@@ -1,0 +1,1151 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>L東京喰種 実戦記録・モード推測ツール</title>
+<style>
+:root{
+  --bg:#0f1012;--panel:#1a1c20;--panel2:#24272c;--line:#30343b;--tx:#ebecee;--mut:#9aa0a8;
+  --acc:#c8384a;--acc2:#e8b04a;--ok:#4cc38a;--ng:#e0605a;--hint:#8fb8ff;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:"Hiragino Sans","Noto Sans JP",system-ui,sans-serif;font-size:15px;line-height:1.5}
+.wrap{max-width:860px;margin:0 auto;padding:12px 12px 90px}
+header{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+h1{font-size:17px;margin:0}
+h1 small{display:block;font-size:11px;color:var(--mut);font-weight:normal}
+.tools{display:flex;gap:6px;flex-wrap:wrap}
+button{font:inherit;color:var(--tx);background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:8px 10px;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+button:active{transform:scale(.97)}
+button:disabled{opacity:.3;cursor:not-allowed;transform:none}
+.sm{font-size:12px;padding:6px 9px}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:12px}
+.box h3{margin:0 0 8px;font-size:14px;color:var(--acc2);display:flex;justify-content:space-between;align-items:center;gap:6px}
+.muted{color:var(--mut);font-size:12px}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg button.on,.chip.on{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:bold}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.meta{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+@media(max-width:640px){.meta{grid-template-columns:1fr 1fr}}
+.meta label,.fld{display:flex;flex-direction:column;font-size:11.5px;color:var(--mut);gap:3px}
+input,select,textarea{font:inherit;font-size:15px;background:var(--panel2);color:var(--tx);border:1px solid var(--line);border-radius:8px;padding:7px;width:100%;min-width:0;color-scheme:dark}
+select{padding:6px}
+/* 推測パネル */
+.est{border-left:4px solid var(--acc)}
+.est .big{font-size:26px;font-weight:bold;margin:2px 0}
+.est .big.q{color:var(--hint)}
+.est .big.warn{color:var(--ng)}
+.est ul{margin:6px 0 0;padding-left:18px;font-size:12.5px;color:var(--mut)}
+.banner{background:#3a2a10;border:1px solid var(--acc2);border-radius:10px;padding:8px 10px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px}
+/* ゾーン */
+.zrow{display:grid;grid-template-columns:48px repeat(5,1fr);gap:4px;align-items:center;margin-bottom:4px}
+.zrow b{font-size:13px;text-align:right;padding-right:4px}
+.zrow button{padding:7px 0;font-size:12px;border-radius:8px}
+.zrow button.on{background:var(--panel);border-color:var(--acc2);color:var(--acc2);font-weight:bold}
+.zrow button.on.v-unreached{border-color:var(--line);color:var(--mut)}
+.zrow button.auto{border-style:dashed}
+.irow{display:grid;grid-template-columns:48px 1fr;gap:6px;align-items:center;margin-bottom:5px}
+.irow b{font-size:13px;text-align:right;padding-right:4px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{padding:7px 10px;font-size:13px}
+.big-btn{min-height:54px;font-weight:bold}
+.okb{border-color:var(--ok);color:var(--ok)}
+.ngb{border-color:var(--ng);color:var(--ng)}
+.accb{border-color:var(--acc2);color:var(--acc2)}
+.list{margin:0;padding:0;list-style:none}
+.list li{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--line);font-size:13px}
+.list li span.f{flex:1}
+.hint{color:var(--hint)}
+.tag{display:inline-block;padding:1px 6px;border-radius:6px;font-size:11px;background:var(--panel2)}
+/* AT */
+.atbox{border:2px solid var(--acc)}
+.atsum{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
+.atsum div{background:var(--panel2);border-radius:10px;padding:8px;text-align:center}
+.atsum b{display:block;font-size:20px}
+.atsum span{font-size:11px;color:var(--mut)}
+.cnt{display:flex;align-items:center;gap:8px}
+.cnt .n{min-width:28px;text-align:center;font-weight:bold;font-size:18px}
+/* 履歴 */
+.tl{border-left:2px solid var(--line);margin-left:6px;padding-left:12px}
+.tlseg{margin-bottom:12px;position:relative}
+.tlseg:before{content:"";position:absolute;left:-18px;top:6px;width:10px;height:10px;border-radius:50%;background:var(--acc)}
+.tlseg.sel:before{background:var(--acc2)}
+.tlhead{display:flex;justify-content:space-between;align-items:center;gap:6px;font-size:13px}
+.tlhead .t{font-weight:bold}
+.tlline{font-size:13px;margin:2px 0}
+details{margin-top:4px}
+summary{font-size:12px;color:var(--mut);cursor:pointer}
+.det{font-size:12px;color:var(--mut);padding:4px 0 0 4px}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th,td{padding:5px;border-bottom:1px solid var(--line);text-align:left}
+th{color:var(--mut);font-weight:normal;font-size:11.5px}
+.notes{font-size:11.5px;color:var(--mut)}
+.notes li{margin-bottom:3px}
+/* FAB・モーダル */
+.fab{position:fixed;right:14px;bottom:16px;z-index:5;background:var(--acc);border-color:var(--acc);color:#fff;font-weight:bold;border-radius:99px;padding:12px 16px;box-shadow:0 4px 14px rgba(0,0,0,.5)}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.65);display:none;align-items:flex-end;justify-content:center;z-index:10}
+.modal.show{display:flex}
+.modal .in{background:var(--panel);border:1px solid var(--line);border-radius:16px 16px 0 0;padding:14px;width:min(560px,100vw);max-height:86vh;overflow:auto}
+.modal .in h4{margin:0 0 10px;font-size:15px;color:var(--acc2)}
+.opt{display:flex;flex-direction:column;align-items:flex-start;text-align:left;width:100%;margin-bottom:6px}
+.opt small{color:var(--mut);font-size:11.5px}
+.opt.s small{color:var(--acc2)}
+.btbl{display:grid;grid-template-columns:62px repeat(5,1fr);gap:4px;align-items:center;width:100%;text-align:center;font-size:12.5px}
+.btbl b{text-align:left}
+.toast{position:fixed;left:50%;bottom:80px;transform:translateX(-50%);background:var(--acc2);color:#1a1a1a;padding:8px 14px;border-radius:99px;font-weight:bold;opacity:0;transition:opacity .2s;pointer-events:none;z-index:11}
+.toast.show{opacity:1}
+textarea{height:180px;font-size:12px;margin-bottom:10px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>L東京喰種 実戦記録・モード推測<small>前兆・招待状・アイキャッチ・CZ・BITESを記録して滞在モードを推測</small></h1>
+    <div class="tools">
+      <button class="sm" data-a="undo" id="undoBtn">↶ 1つ戻す</button>
+      <button class="sm" data-a="copy">テキストコピー</button>
+      <button class="sm" data-a="menu">その他</button>
+    </div>
+  </header>
+  <div id="app"></div>
+</div>
+<button class="fab" id="fab" data-a="eyeOpen">＋アイキャッチ</button>
+<div class="modal" id="modal"><div class="in" id="modalIn"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* =====================================================================
+   解析データ（ここだけ直せば判定に反映。過去の履歴も自動で再計算）
+   出典：一撃・なな徹・P-town DMM・パチセブン ほか（各値は2026/11時点）
+   ===================================================================== */
+const KAISEKI = {
+  MODES: ['通常A','通常B','通常C','チャンス','天国準備','天国'],
+  // 規定G数CZ当選時に滞在しうるモード（index: 0=A … 5=天国）
+  ZONE_MODES: {50:[3,4,5],100:[1,2,3,4,5],150:[3,4],200:[0,2,3,4],250:[3],300:[1,2,3,4],400:[0,2],500:[1,2],600:[0,1,3]},
+  // 天井（到達でCZ確定）。これを超えて通過したモードは論理的に否定
+  CEIL: [600,600,500,600,300,100],
+  ZONES: [50,100,150,200,250,300,400,500,600],
+  INVITE_G: [50,150,250,350,450,550],
+  // 前兆示唆（すべて「？」扱い）。set:null はモード以外の示唆
+  OMEN_HINTS: [
+    {g:50,  v:['pre','sky'], min:3, label:'チャンス以上'},
+    {g:100, v:['pre'],       only:4, label:'天国準備'},
+    {g:150, v:['pre','sky'], min:1, label:'通常B以上'},
+    {g:150, v:['sky'],       label:'本前兆'},
+    {g:200, v:['none'],      only:4, label:'天国準備'},
+    {g:250, v:['pre','sky'], min:2, label:'通常C以上'},
+    {g:250, v:['sky'],       label:'本前兆'},
+    {g:300, v:['pre'],       only:3, label:'チャンス'},
+    {g:400, v:['none'],      only:2, label:'通常C'},
+    {g:500, v:['pre'],       only:3, label:'チャンス'},
+    {g:600, v:['pre','sky'], label:'本前兆'},
+  ],
+  // 月山招待状  k: d=デフォルト g=規定G数示唆 s=設定示唆 / rem: 残りG（以内）
+  INVITES: [
+    {id:'d1', k:'d', text:'今夜ディナーを楽しもう', label:'デフォルト'},
+    {id:'d2', k:'d', text:'パーティーの時間は未定だ', label:'デフォルト'},
+    {id:'g600', k:'g', text:'心配しなくとも最悪の事態にはならないだろう', label:'600G否定'},
+    {id:'g135', k:'g', text:'1時35分に下記の場所で待っている', label:'残り100・300・500G示唆'},
+    {id:'g246', k:'g', text:'2時46分に下記の場所で待っている', label:'残り200・400・600G示唆'},
+    {id:'gkuu', k:'g', text:'喰うか喰われるかは君次第だ', label:'残り200G以内 or 500G以上示唆'},
+    {id:'g3', k:'g', text:'3時までに僕のもとにきてくれ', label:'残り300G以内濃厚', rem:300},
+    {id:'g2', k:'g', text:'2時までに僕のもとにきてくれ', label:'残り200G以内濃厚', rem:200},
+    {id:'g1', k:'g', text:'今すぐ僕のもとにきてくれ', label:'残り100G以内濃厚', rem:100},
+    {id:'s_even', k:'s', text:'偶にはディナーでもどうだい？', label:'偶数設定示唆'},
+    {id:'s_n1', k:'s', text:'不思議な香りだ…', label:'設定1否定'},
+    {id:'s_n2', k:'s', text:'君はなかなかの活字中毒らしいね', label:'設定2否定'},
+    {id:'s_n3', k:'s', text:'本は良いよね…', label:'設定3否定'},
+    {id:'s_n4', k:'s', text:'僕としたことがすまない', label:'設定4否定'},
+    {id:'s_4up', k:'s', text:'存分に楽しもうじゃないか', label:'設定4以上'},
+    {id:'s_6', k:'s', text:'特別な夜を楽しもうじゃないか', label:'設定6'},
+  ],
+  // アイキャッチ（通常時のステージチェンジ）
+  EYES: [
+    {id:'kaneki', name:'金木研（眼帯）', label:'デフォルト'},
+    {id:'touka', name:'霧嶋董香（白背景）', label:'通常B以上示唆', min:1},
+    {id:'hinami', name:'笛口雛実（白背景）', label:'通常C以上示唆', min:2},
+    {id:'tsukiyama', name:'月山習（白背景）', label:'本前兆期待度アップ'},
+    {id:'rize', name:'神代利世（白背景）', label:'本前兆期待度大幅アップ'},
+    {id:'ghoul', name:'喰種化（金木・董香・雛実・月山）', label:'発生から100G以内に規定G数当選濃厚'},
+    {id:'rize_g', name:'喰種化（神代利世）', label:'連続演出復活濃厚'},
+  ],
+  // CZ失敗時の終了カード（モード示唆は次回区間に反映）
+  CARDS: [
+    {id:'k1', t:'d', name:'金木研①', label:'デフォルト'},
+    {id:'k2', t:'d', name:'金木研②', label:'デフォルト'},
+    {id:'touka', t:'m', name:'霧嶋董香', label:'通常B以上期待度アップ', min:1},
+    {id:'hinami', t:'m', name:'笛口雛実', label:'通常B以上期待度アップ', min:1},
+    {id:'amon', t:'m', name:'亜門鋼太朗', label:'通常B以上濃厚', min:1},
+    {id:'mado', t:'m', name:'真戸呉緒', label:'通常C以上濃厚', min:2},
+    {id:'kanekiG', t:'m', name:'金木研（喰種）', label:'チャンス以上濃厚', min:3},
+    {id:'toukaG', t:'m', name:'霧嶋董香（喰種）', label:'チャンス以上濃厚', min:3},
+    {id:'tsukiyama', t:'m', name:'月山習', label:'天国準備以上濃厚', min:4},
+    {id:'rize', t:'m', name:'神代利世', label:'天国濃厚', min:5},
+    {id:'suzuya', t:'s', name:'鈴屋什造', label:'偶数設定濃厚'},
+    {id:'owl', t:'s', name:'梟', label:'設定4以上濃厚'},
+    {id:'arima', t:'s', name:'有馬貴将', label:'設定6濃厚'},
+    {id:'none', t:'d', name:'確認できず', label:'—'},
+  ],
+  // AT終了画面
+  AT_END: [
+    {id:'kaneki', name:'金木研', label:'デフォルト'},
+    {id:'amon', name:'亜門鋼太朗&真戸暁', label:'奇数設定示唆'},
+    {id:'suzuya', name:'鈴屋什造&篠原幸紀', label:'偶数設定示唆'},
+    {id:'rize', name:'神代利世', label:'設定1否定'},
+    {id:'hinami', name:'笛口雛実&笛口リョーコ', label:'高設定示唆[弱]'},
+    {id:'yomo', name:'四方蓮示&イトリ&ウタ', label:'高設定示唆[強]'},
+    {id:'kt', name:'金木研&霧嶋董香', label:'設定4以上濃厚'},
+    {id:'anteiku', name:'あんていく全員集合', label:'設定6濃厚'},
+  ],
+  // エンディングのキャラカード（出典：なな徹）。g: w=白 b=青 r=赤 s=特殊
+  ED_CARDS: [
+    {id:'w1', g:'w', name:'白・金木研', label:'奇数設定示唆（弱）'},
+    {id:'w2', g:'w', name:'白・その他キャラ', label:'奇数設定示唆（董香・雛実・永近・西尾・月山・四方・ウタ・イトリ・古間・入見）'},
+    {id:'w3', g:'w', name:'白・芳村', label:'奇数設定示唆（強）'},
+    {id:'b1', g:'b', name:'青・金木研', label:'偶数設定示唆（弱）'},
+    {id:'b2', g:'b', name:'青・その他キャラ', label:'偶数設定示唆（董香・雛実・ナキ・西尾・月山・篠原・滝澤・真戸暁・真戸呉緒・丸手）'},
+    {id:'b3', g:'b', name:'青・亜門鋼太朗', label:'偶数設定示唆（強）'},
+    {id:'r1', g:'r', name:'赤・金木研', label:'高設定示唆（弱）'},
+    {id:'r2', g:'r', name:'赤・その他キャラ', label:'高設定示唆（董香・ヤモリ・霧嶋絢都・亜門・篠原・鈴屋）'},
+    {id:'r3', g:'r', name:'赤・鯱', label:'高設定示唆（強）'},
+    {id:'s1', g:'s', name:'銅・鈴屋什造', label:'設定1否定'},
+    {id:'s2', g:'s', name:'銅・高槻泉', label:'設定2否定'},
+    {id:'s3', g:'s', name:'銅・梟', label:'設定3否定'},
+    {id:'s4', g:'s', name:'銅・エト', label:'設定4否定'},
+    {id:'s5', g:'s', name:'銀・金木研', label:'設定3以上'},
+    {id:'s6', g:'s', name:'金・神代利世', label:'設定4以上'},
+    {id:'s7', g:'s', name:'隻眼の梟', label:'設定5以上'},
+    {id:'s8', g:'s', name:'虹・有馬貴将', label:'設定6'},
+  ],
+  ED_GROUP: {w:'奇数示唆（白カード）', b:'偶数示唆（青カード）', r:'高設定示唆（赤カード）', s:'特殊カード（銅・銀・金・虹）'},
+  // AT中の対戦相手（勝利期待度・全設定共通）
+  OPPONENTS: [
+    {id:'shachi', name:'鯱', p:40.0}, {id:'ayato', name:'霧嶋絢都', p:47.0}, {id:'yamori', name:'ヤモリ', p:53.0},
+    {id:'tokuto', name:'特等ら', p:76.0}, {id:'amon', name:'亜門', p:86.0}, {id:'arima', name:'有馬', p:67.0}, {id:'unk', name:'不明', p:null},
+  ],
+  // BITES報酬テーブル（枚数）
+  BITES: [
+    {id:'A', name:'A', v:[50,100,200,300,500]},
+    {id:'B', name:'B', v:[50,50,500,500,1000]},
+    {id:'C', name:'C', v:[100,200,300,500,1000]},
+    {id:'D', name:'D', v:[100,100,500,1000,2000]},
+    {id:'E', name:'E', v:[200,300,500,1000,2000]},
+    {id:'SUPER', name:'超BITES', v:[300,500,1000,2000,3000]},
+    {id:'KIWAMI', name:'極BITES', v:[2000]},
+  ],
+  CZ_TYPES: {remi:'レミニセンス', rize:'大喰いのリゼ'},
+  // CZを経由しないAT
+  ROUTES: {ep:'エピソードボーナス', direct:'AT直撃', hiki:'AT引き戻し'},
+  // 朝一（設定変更時のみ）：CZ間天井200G+α。ゾーン・移行先は調査中
+  ASA_CEIL: 200,
+  // 設定差（設定1〜6）。p:'den'=1/分母  p:'pct'=％
+  SETTING: [
+    {id:'at',   name:'AT初当たり確率', p:'den', v:[394.4,380.5,357.0,325.9,291.2,261.3]},
+    {id:'cz',   name:'CZ合算確率', p:'den', v:[262.6,255.6,246.5,233.1,216.4,203.7]},
+    {id:'remi', name:'レミニセンス確率', p:'den', v:[300.5,295.1,287.6,276.7,262.7,251.2]},
+    {id:'rize', name:'大喰いのリゼ確率', p:'den', v:[2079.1,1906.5,1722.8,1478.9,1226.6,1074.9]},
+    {id:'ep',   name:'エピソードボーナス確率', p:'den', v:[6620.2,5879.7,5114.5,4062.5,3166.7,2639.5]},
+    {id:'in100',name:'100G以内CZ当選率（朝一除く）', p:'pct', v:[19.58,21.04,23.15,26.37,31.96,36.01]},
+    {id:'hiki', name:'AT引き戻し確率', p:'pct', v:[7.81,7.81,9.38,10.94,12.50,15.23]},
+    {id:'ura',  name:'初当たり時の裏AT選択率', p:'pct', v:[1.10,1.32,1.63,2.19,2.85,3.32]},
+  ],
+  TRIGGERS: {kitei:'規定G数', rare:'レア役解除', unknown:'不明'},
+  PRE_RARE: {no:'レア役なし', yes:'レア役あり', unk:'不明'},
+  // レア役解除時の状態と当選役
+  RARE_STATE: {normal:'通常時', super:'超高確（精神世界）'},
+  RARE_ROLES: {wcherry:'弱チェリー', scherry:'強チェリー', suika:'スイカ', chance:'チャンス目', mcherry:'中段チェリー', unk:'不明'},
+  ZONE_VALUES: [['unreached','未到達'],['unknown','不明'],['none','なし'],['pre','プレ'],['sky','上空']],
+  ZONE_LABEL: {unreached:'未到達',unknown:'不明',none:'前兆なし',pre:'プレ前兆',sky:'東京上空'},
+};
+
+/* =====================================================================
+   モード推測エンジン（画面とは独立。segments → 区間ごとの結果）
+   ===================================================================== */
+const ENGINE = (() => {
+  const K = KAISEKI, ALL = [0,1,2,3,4,5];
+  const up = m => ALL.filter(x => x >= m);
+  const inter = (a,b) => a.filter(x => b.includes(x));
+  const isUp = s => s.length > 0 && s.length === 6 - s[0] && s.every((x,i) => x === s[0]+i);
+  const setLabel = s => s.length === 1 ? K.MODES[s[0]] : isUp(s) ? K.MODES[s[0]]+'以上' : s.map(x=>K.MODES[x]).join('・');
+
+  // 通過したとみなす最大ゾーン（CZ当選G未満は入力が無くても通過）
+  function passedBound(seg){
+    const cz = seg.cz;
+    if(cz && cz.trigger==='kitei' && cz.gs.length) return Math.min(...cz.gs) - 1;
+    if(cz && cz.trigger==='rare'){ const n = parseInt(cz.range,10); if(!isNaN(n)) return n; }
+    return -1;
+  }
+  function zoneOf(seg, g){
+    const v = seg.zones[g] || 'unreached';
+    if(v === 'unreached' && g <= passedBound(seg)) return 'unknown';
+    return v;
+  }
+  function maxReached(seg){
+    let m = 0;
+    K.ZONES.forEach(g => { if(zoneOf(seg,g) !== 'unreached') m = g; });
+    return m;
+  }
+  function rareRangeDefault(seg){
+    const last = maxReached(seg);
+    const i = K.ZONES.indexOf(last);
+    if(last === 0) return '0～50G間';
+    if(i === K.ZONES.length-1) return '600G～';
+    return `${last}～${K.ZONES[i+1]}G間`;
+  }
+  function kakenuke(at){
+    if(!at || !at.ended || at.arima) return false;
+    const it = at.sets || [];
+    return !it.some(x=>x.k==='set' && x.res==='bites') && !it.some(x=>x.k==='judge' && x.ok) && !at.muka && !at.owl;
+  }
+
+  function classify(logical, hints){
+    const hintSet = hints.reduce((acc,h) => inter(acc,h.set), ALL);
+    const combined = inter(logical, hintSet);
+    const r = { logical, hintSet, combined, hints };
+    if(!logical.length){ r.kind='warn'; r.main='要確認'; r.why='入力内容同士が矛盾しています'; return r; }
+    if(hints.length && !combined.length){ r.kind='warn'; r.main='要確認'; r.why='示唆と確定情報（または示唆同士）が矛盾しています'; return r; }
+    if(logical.length === 1){ r.kind='fix'; r.main=K.MODES[logical[0]]+'確定'; return r; }
+    if(hints.length && combined.length < logical.length){ r.kind='q'; r.main=setLabel(combined)+'？'; r.sub = logical.length<6 ? '確定情報：'+setLabel(logical) : ''; return r; }
+    if(logical.length === 6){ r.kind='unk'; r.main='モード不明'; return r; }
+    r.kind='fix'; r.main=setLabel(logical); return r;
+  }
+
+  function run(state){
+    const out = [];
+    let startLogical = ALL.slice();
+    let startHints = [];
+    if(!state.asa && state.firstHint != null && state.firstHint !== '') startHints = [{set:up(Number(state.firstHint)), label:'打ち始め '+K.MODES[state.firstHint]+'以上？', src:'打ち始め'}];
+    state.segs.forEach((seg, i) => {
+      if(i === 0 && state.asa){
+        const notes = [], cz = seg.cz;
+        const mr = maxReached(seg);
+        const r = { logical:[], hints:[], notes, startHints:[], kind:'fix', main:'朝一モード（天井200G）', asa:true };
+        if(mr > K.ASA_CEIL){ r.kind='warn'; r.main='要確認'; r.why='朝一の天井（200G）を超えて通過しています'; }
+        seg.inv.forEach(iv => { const d = K.INVITES.find(x=>x.id===iv.id); if(d && d.k==='g') notes.push(`招待状${iv.g}G「${d.label}」` + (d.rem ? `→ ${iv.g + d.rem}Gまでに当選？` : '')); });
+        notes.push('朝一モードのゾーン振り分け・CZ失敗後の移行先は未判明のため、モードの絞り込みは行いません');
+        r.nextReason = cz && cz.result==='ng' ? '朝一後の移行先は未判明' : cz && cz.result==='ok' ? 'AT終了後は再抽選' : '';
+        let nh = [];
+        if(cz && cz.result==='ng'){ const c = K.CARDS.find(x=>x.id===cz.card); if(c && c.t==='m') nh.push({set:up(c.min), label:'終了カード '+c.name+'：次回'+K.MODES[c.min]+(c.min<5?'以上':'')+'？', src:'card'}); }
+        else if(cz && cz.result==='ok' && seg.at && seg.at.ended){
+          if(seg.at.arima) nh.push({set:[5], label:'有馬ジャッジメント失敗：次回天国？', src:'arima'});
+          else if(kakenuke(seg.at)) nh.push({set:up(1), label:'AT駆け抜け：次回通常B以上？', src:'kake'});
+        }
+        out.push(r); startLogical = ALL.slice(); startHints = nh; return;
+      }
+      let logical = startLogical.slice();
+      const hints = startHints.slice();
+      const notes = [];
+      seg.eye.forEach(e => {
+        const d = K.EYES.find(x=>x.id===e.id); if(!d) return;
+        if(d.min != null) hints.push({set:up(d.min), label:'アイキャッチ '+d.name+'：'+d.label+'？', src:'eye'});
+        else if(d.id !== 'kaneki') notes.push(d.name+'：'+d.label+'？');
+      });
+      K.OMEN_HINTS.forEach(o => {
+        const v = zoneOf(seg, o.g);
+        if(!o.v.includes(v)) return;
+        if(seg.cz && seg.cz.trigger==='kitei' && seg.cz.gs.includes(o.g)) return; // そのゾーンで当選
+        const lab = `${o.g}G${K.ZONE_LABEL[v]}：${o.label}示唆？`;
+        if(o.min != null) hints.push({set:up(o.min), label:lab, src:'omen'});
+        else if(o.only != null) hints.push({set:[o.only], label:lab, src:'omen'});
+        else notes.push(lab);
+      });
+      seg.inv.forEach(iv => {
+        const d = K.INVITES.find(x=>x.id===iv.id); if(!d || d.k !== 'g') return;
+        notes.push(`招待状${iv.g}G「${d.label}」` + (d.rem ? `→ ${iv.g + d.rem}Gまでに当選？` : ''));
+      });
+      // 論理的な絞り込み
+      const cz = seg.cz;
+      if(cz && cz.trigger==='kitei' && cz.gs.length){
+        const allowed = [...new Set(cz.gs.flatMap(g => K.ZONE_MODES[g] || []))];
+        logical = inter(logical, allowed);
+      }else{
+        const mr = maxReached(seg);
+        logical = logical.filter(m => !(K.CEIL[m] < mr));
+      }
+      const res = classify(logical, hints);
+      res.notes = notes;
+      res.startHints = startHints;
+      // 次区間の開始条件
+      let nextLogical = ALL.slice(), nextHints = [], nextReason = '';
+      if(cz && cz.result === 'ng'){
+        if(!logical.length || logical.includes(5)){ nextLogical = ALL.slice(); nextReason = logical.includes(5) ? '天国の可能性ありのため再抽選も考慮' : ''; }
+        else { nextLogical = up(logical[0]); nextReason = 'CZ失敗後は非転落'; }
+        const c = K.CARDS.find(x=>x.id===cz.card);
+        if(c && c.t==='m') nextHints.push({set:up(c.min), label:'終了カード '+c.name+'：次回'+K.MODES[c.min]+(c.min<5?'以上':'')+'？', src:'card'});
+      }else if(cz && cz.result === 'ok' && seg.at && seg.at.ended){
+        nextReason = 'AT終了後は再抽選';
+        if(seg.at.arima) nextHints.push({set:[5], label:'有馬ジャッジメント失敗：次回天国？', src:'arima'});
+        else if(kakenuke(seg.at)) nextHints.push({set:up(1), label:'AT駆け抜け：次回通常B以上？', src:'kake'});
+      }
+      res.nextReason = nextReason;
+      out.push(res);
+      startLogical = nextLogical; startHints = nextHints;
+    });
+    // 逆算：CZ失敗でつながる区間は「次区間の最上位モード以下（天国は例外）」
+    out.forEach(r => r.fin = r.logical.slice());
+    for(let i = out.length-2; i >= 0; i--){
+      const seg = state.segs[i];
+      if(!(seg.cz && seg.cz.result==='ng') || out[i].asa) continue;
+      const nx = out[i+1].fin;
+      if(!nx.length) continue;
+      const mx = Math.max(...nx);
+      out[i].fin = out[i].fin.filter(m => m <= mx || m === 5);
+    }
+    out.forEach(r => {
+      if(r.asa) return;
+      r.finHint = inter(r.fin, r.hintSet || ALL);
+      r.backNarrowed = r.fin.length < r.logical.length;
+    });
+    return out;
+  }
+  return { up, inter, run, zoneOf, maxReached, rareRangeDefault, kakenuke, setLabel, passedBound };
+})();
+
+/* =====================================================================
+   状態管理
+   ===================================================================== */
+const KEY = 'l-tokyoghoul-tool-v1';
+const K = KAISEKI;
+function today(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+const newSeg = () => ({zones:{}, inv:[], eye:[], cz:null, at:null});
+const newDraft = () => ({type:'remi', trigger:'kitei', gs:[], range:'', pre:'unk', state:'normal', role:'unk'});
+const rareDesc = cz => `${cz.state==='super'?'超高確・':''}${K.RARE_ROLES[cz.role||'unk']}`;
+const preOf = cz => cz.trigger==='rare' ? 'yes' : (cz.pre || 'unk');
+const preSel = (tgt, d) => `<div class="muted">前兆中・当選時のレア役（リゼ・EPボーナスの集計用）</div>
+  <div class="seg" style="margin-bottom:8px">${Object.entries(K.PRE_RARE).map(([k,v])=>`<button class="sm ${preOf(d)===k?'on':''}" data-a="czSet" data-t="${tgt}" data-f="pre" data-v="${k}" ${d.trigger==='rare'&&k!=='yes'?'disabled':''}>${v}</button>`).join('')}</div>`;
+function blank(){ return {meta:{date:today(),store:'',no:'',games:''}, firstHint:'', asa:false, segs:[newSeg()], sel:null, draft:newDraft()}; }
+let S = load(), undoStack = [];
+function load(){
+  try{ const t = localStorage.getItem(KEY); if(t){ const o = JSON.parse(t); if(o && Array.isArray(o.segs) && o.segs.length) return migrate(Object.assign(blank(), o)); } }catch(e){}
+  return blank();
+}
+function migrate(st){
+  st.segs.forEach(sg => { const at = sg.at; if(at && !at.sets){ at.sets = (at.bites||[]).map(b=>({k:'set', opp:'unk', res:'bites', bites:b, lose:0})); delete at.bites; at.ura = !!at.ura; } });
+  return st;
+}
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
+function act(fn){ undoStack.push(JSON.stringify(S)); if(undoStack.length>300) undoStack.shift(); fn(); save(); render(); }
+const curIdx = () => S.sel == null || S.sel >= S.segs.length ? S.segs.length-1 : S.sel;
+const curSeg = () => S.segs[curIdx()];
+const esc = v => String(v ?? '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+const inAT = seg => seg.cz && seg.cz.result==='ok' && seg.at && !seg.at.ended;
+const newAT = (ura=false) => ({ura, sets:[], muka:0, owl:0, ended:false, arima:false, endScreen:'', ending:false, ed:{}});
+const bitesOf = at => (at && at.sets ? at.sets.filter(x=>x.k==='set' && x.bites).map(x=>x.bites) : []);
+const oppOf = id => K.OPPONENTS.find(o=>o.id===id) || K.OPPONENTS[K.OPPONENTS.length-1];
+const atName = at => at && at.ura ? '裏AT' : '通常AT';
+function curUra(at){ const j = (at.sets||[]).filter(x=>x.k==='judge' && x.ok); return j.length ? j[j.length-1].ura : at.ura; }
+function judgeRights(at){ const it = at.sets||[]; return it.filter(x=>x.k==='set'&&x.res==='arima').length + (at.ending?1:0) - it.filter(x=>x.k==='judge').length; }
+const lastOpenSet = at => { const it = at.sets||[]; const l = it[it.length-1]; return l && l.k==='set' && !l.res ? l : null; };
+function atItemLines(at){
+  const L = []; let n = 0;
+  (at.sets||[]).forEach((x,i,arr) => {
+    if(x.k==='judge'){ L.push(`有馬ジャッジメント${x.ok ? '成功 → CCGの死神 → '+(x.ura?'裏AT':'通常AT') : '失敗'}`); return; }
+    n++; const o = oppOf(x.opp);
+    let r = x.res==='bites' ? '勝利 → BITES：'+bitesLine(x.bites) : x.res==='arima' ? '勝利 → ジャッジメント権利' : i < arr.length-1 ? '決着前にジャッジメントへ' : at.ended ? 'AT終了' : '対戦中';
+    L.push(`${n}戦目 vs ${o.name}${x.lose?`（敗北${x.lose}回）`:''} → ${r}`);
+  });
+  return L;
+}
+const bitesAmt = b => { const t = K.BITES.find(x=>x.id===b.tbl); return t ? t.v[b.stage-1] || 0 : 0; };
+const bitesLine = b => { const t = K.BITES.find(x=>x.id===b.tbl); if(!t) return ''; return `${t.name}（${t.v.join('→')}）/ ${b.stage}段階 / ${bitesAmt(b)}枚`; };
+
+function startLabel(i){
+  if(i === 0) return S.asa ? '朝一（設定変更）' : '打ち始め';
+  const p = S.segs[i-1];
+  if(p.cz && p.cz.result==='ok') return p.at && p.at.arima ? '有馬失敗後' : ENGINE.kakenuke(p.at) ? 'AT駆け抜け後' : 'AT終了後';
+  return 'CZ失敗後';
+}
+function czWhere(cz, seg){
+  if(cz.route==='hiki') return K.ROUTES[cz.route];
+  if(cz.trigger==='kitei') return cz.gs.length ? cz.gs.slice().sort((a,b)=>a-b).join('or')+'G当選' : '規定G数（G不明）';
+  if(cz.trigger==='rare') return (cz.range || ENGINE.rareRangeDefault(seg))+` レア役解除（${rareDesc(cz)}）`;
+  return '当選契機不明';
+}
+
+/* ---------- 履歴の行（画面・テキスト共通） ---------- */
+function segLines(i, R){
+  const seg = S.segs[i], r = R[i], L = [];
+  const zn = K.OMEN_HINTS.filter(o => o.v.includes(ENGINE.zoneOf(seg,o.g)) && !(seg.cz && seg.cz.trigger==='kitei' && seg.cz.gs.includes(o.g)));
+  const notable = [...new Set(zn.map(o => `${o.g}G${K.ZONE_LABEL[ENGINE.zoneOf(seg,o.g)]}`))];
+  if(notable.length) L.push('前兆：'+notable.join(' / '));
+  const ivs = seg.inv.map(iv => { const d=K.INVITES.find(x=>x.id===iv.id); return d && d.k!=='d' ? `${iv.g}G「${d.label}」` : null; }).filter(Boolean);
+  if(ivs.length) L.push('招待状：'+ivs.join(' / '));
+  const eyes = seg.eye.map(e => { const d=K.EYES.find(x=>x.id===e.id); return d && d.id!=='kaneki' ? d.name : null; }).filter(Boolean);
+  if(eyes.length) L.push('アイキャッチ：'+eyes.join(' → '));
+  const cz = seg.cz;
+  if(cz){
+    if(cz.route==='hiki') L.push(`AT引き戻し → ${atName(seg.at)}`);
+    else if(cz.route) L.push(`${czWhere(cz,seg)} → ${K.ROUTES[cz.route]}${cz.route==='ep'?'（'+K.PRE_RARE[preOf(cz)]+'）':''} → ${atName(seg.at)}`);
+    else { const res = cz.result==='ok' ? '成功 → '+atName(seg.at) : cz.result==='ng' ? '失敗' : '';
+      L.push(`${czWhere(cz,seg)} → ${K.CZ_TYPES[cz.type]}${cz.type==='rize'?'（'+K.PRE_RARE[preOf(cz)]+'）':''}${res}`); }
+    if(cz.result==='ng'){
+      const c = K.CARDS.find(x=>x.id===cz.card);
+      if(c) L.push(`CZ終了カード：${c.name}` + (c.t==='m' ? ` → 次回${K.MODES[c.min]}${c.min<5?'以上':''}？` : c.t==='s' ? `（${c.label}）` : ''));
+    }
+  }
+  const at = seg.at;
+  if(cz && cz.result==='ok' && at){
+    atItemLines(at).forEach(l => L.push(l));
+    if(at.muka) L.push(`百足覚醒 ×${at.muka}`);
+    if(at.owl) L.push(`隻眼の梟 ×${at.owl}`);
+    if(at.ending){
+      const g = edSummary(at.ed), sp = K.ED_CARDS.filter(c=>c.g==='s' && at.ed && at.ed[c.id]).map(c=>`${c.name}（${c.label}）×${at.ed[c.id]}`);
+      L.push(`エンディング：奇数(白)${g.w}・偶数(青)${g.b}・高設定(赤)${g.r}` + (sp.length ? ' / 特殊：'+sp.join(' / ') : ''));
+    }
+    if(at.ended){
+      if(at.arima) L.push('AT終了（有馬ジャッジメント失敗）→ 次回天国？');
+      else if(ENGINE.kakenuke(at)) L.push('AT終了：駆け抜け → 次回通常B以上？');
+      else L.push('AT終了：駆け抜け回避');
+      const e = K.AT_END.find(x=>x.id===at.endScreen);
+      if(e && e.id!=='kaneki') L.push(`AT終了画面：${e.name}（${e.label}）`);
+    }else L.push('AT中');
+  }
+  return L;
+}
+
+/* =====================================================================
+   描画
+   ===================================================================== */
+function render(){
+  const R = ENGINE.run(S);
+  const idx = curIdx(), seg = S.segs[idx], r = R[idx], isLast = idx === S.segs.length-1;
+  const M = S.meta;
+  let h = '';
+
+  h += `<div class="box"><h3>実践情報</h3><div class="meta">
+    <label>日付<input type="date" data-m="date" value="${esc(M.date)}"></label>
+    <label>店舗名<input type="text" data-m="store" value="${esc(M.store)}" placeholder="例：〇〇店"></label>
+    <label>台番号<input type="text" data-m="no" value="${esc(M.no)}" placeholder="例：123"></label>
+    <label>総ゲーム数<input type="number" inputmode="numeric" data-m="games" value="${esc(M.games)}" placeholder="後から入力可"></label>
+  </div></div>`;
+
+  if(!isLast) h += `<div class="banner"><span>区間${idx+1}（${startLabel(idx)}）を編集中</span><button class="sm" data-a="selCur">現在の区間に戻る</button></div>`;
+
+  // 推測パネル
+  const cls = r.kind==='q' ? 'q' : r.kind==='warn' ? 'warn' : '';
+  const why = [];
+  r.hints.forEach(x => why.push(`<span class="hint">${esc(x.label)}</span>`));
+  if(r.sub) why.push(esc(r.sub));
+  if(r.why) why.push(`<span style="color:var(--ng)">${esc(r.why)}</span>`);
+  r.notes.forEach(n => why.push(esc(n)));
+  const startTxt = idx>0 && R[idx-1].nextReason ? `（${R[idx-1].nextReason}）` : '';
+  h += `<div class="box est"><h3>区間${idx+1}：${startLabel(idx)}${startTxt}<span class="muted">${inAT(seg)?'AT中':'通常時'}</span></h3>
+    <div class="big ${cls}">${esc(r.main)}</div>
+    ${why.length ? `<ul>${why.map(x=>`<li>${x}</li>`).join('')}</ul>` : '<div class="muted">まだ判断材料がありません</div>'}
+    ${idx===0 ? `<div class="muted" style="margin-top:8px">打ち始めの状態</div><div class="seg"><button class="sm ${!S.asa?'on':''}" data-a="asa" data-v="0">据え置き・不明</button><button class="sm ${S.asa?'on':''}" data-a="asa" data-v="1">朝一（設定変更・天井200G）</button></div>` : ''}
+    ${idx===0 && !S.asa ? `<div class="fld" style="margin-top:8px">打ち始めの前情報（前任者の終了カードなど・示唆扱い）
+      <select data-c="firstHint"><option value="">なし</option>${K.MODES.map((m,i)=>i?`<option value="${i}" ${String(S.firstHint)===String(i)?'selected':''}>${m}${i<5?'以上':''}？</option>`:'').join('')}</select></div>` : ''}
+  </div>`;
+
+  if(isLast && inAT(seg)){
+    h += atPanel(seg, idx, true);
+    h += `<details class="box"><summary>この区間の通常時の記録を見る・直す</summary>${normalInputs(seg, idx)}</details>`;
+  }else{
+    h += normalInputs(seg, idx);
+    h += czPanel(seg, idx, isLast);
+    if(seg.cz && seg.cz.result==='ok' && seg.at) h += atPanel(seg, idx, false);
+  }
+
+  h += historyPanel(R);
+  h += settingPanel();
+  h += `<div class="box notes"><ul>
+    <li>「確定」はG数・天井・CZ失敗後の非転落などから論理的に絞れたもの、「？」は濃厚・示唆・期待度アップを含む推測です。示唆を理由に他のモードを除外はしていません。</li>
+    <li>レア役解除のCZでは規定G数による絞り込みを行いません（天井を超えて通過したモードのみ除外）。</li>
+    <li>前兆の有無はレア役による前兆が混ざる可能性があります。</li>
+    <li>過去の区間は履歴の「編集」から直せます。直すと以降の区間もすべて再計算されます。</li>
+    <li>データはこのブラウザ内にのみ保存されます。</li></ul></div>`;
+
+  document.getElementById('app').innerHTML = h;
+  document.getElementById('undoBtn').disabled = !undoStack.length;
+  document.getElementById('fab').style.display = inAT(seg) && isLast ? 'none' : '';
+}
+
+function normalInputs(seg, idx){
+  const pb = ENGINE.passedBound(seg);
+  let z = '';
+  K.ZONES.forEach(g => {
+    const stored = seg.zones[g] || 'unreached', eff = ENGINE.zoneOf(seg,g);
+    z += `<div class="zrow"><b>${g}G</b>${K.ZONE_VALUES.map(([v,l]) => {
+      const on = eff===v, auto = on && stored!==eff;
+      return `<button class="${on?'on':''} ${auto?'auto':''} v-${v}" data-a="zone" data-g="${g}" data-v="${v}">${l}</button>`;
+    }).join('')}</div>`;
+  });
+  let iv = '';
+  K.INVITE_G.forEach(g => {
+    const cur = (seg.inv.find(x=>x.g===g)||{}).id || '';
+    iv += `<div class="irow"><b>${g}G</b><select data-c="inv" data-g="${g}"><option value="">—（未確認）</option>
+      <optgroup label="デフォルト">${K.INVITES.filter(x=>x.k==='d').map(x=>`<option value="${x.id}" ${cur===x.id?'selected':''}>${esc(x.text)}</option>`).join('')}</optgroup>
+      <optgroup label="規定G数示唆">${K.INVITES.filter(x=>x.k==='g').map(x=>`<option value="${x.id}" ${cur===x.id?'selected':''}>${esc(x.label)}｜${esc(x.text)}</option>`).join('')}</optgroup>
+      <optgroup label="設定示唆">${K.INVITES.filter(x=>x.k==='s').map(x=>`<option value="${x.id}" ${cur===x.id?'selected':''}>${esc(x.label)}｜${esc(x.text)}</option>`).join('')}</optgroup>
+    </select></div>`;
+  });
+  const eyes = seg.eye.map((e,i) => { const d=K.EYES.find(x=>x.id===e.id)||{name:e.id,label:''};
+    return `<li><span class="f">${i+1}. ${esc(d.name)} <span class="muted">${esc(d.label)}${d.min!=null||(d.id!=='kaneki')?'？':''}</span></span><button class="sm" data-a="eyeDel" data-i="${i}">削除</button></li>`; }).join('');
+  return `<div class="box"><h3>前兆（ゾーンごと）<span class="muted">点線＝CZ当選Gより前のため自動で「不明」</span></h3>${z}</div>
+  <div class="box"><h3>月山招待状</h3>${iv}</div>
+  <div class="box"><h3>アイキャッチ（出現順）<button class="sm" data-a="eyeOpen">＋追加</button></h3>
+    ${eyes ? `<ul class="list">${eyes}</ul>` : '<div class="muted">右下の「＋アイキャッチ」からいつでも記録できます</div>'}</div>`;
+}
+
+function czPanel(seg, idx, isLast){
+  const cz = seg.cz;
+  if(!cz && !isLast) return '';
+  const d = cz || S.draft;
+  const tgt = cz ? 'cz' : 'draft';
+  const gchips = K.ZONES.map(g => `<button class="chip ${d.gs.includes(g)?'on':''}" data-a="czG" data-t="${tgt}" data-g="${g}">${g}</button>`).join('');
+  const rangeDef = ENGINE.rareRangeDefault(Object.assign({}, seg, {cz:null}));
+  let body = `
+    <div class="muted">CZの種類</div>
+    <div class="seg" style="margin-bottom:8px">${Object.entries(K.CZ_TYPES).map(([k,v])=>`<button class="${d.type===k?'on':''}" data-a="czSet" data-t="${tgt}" data-f="type" data-v="${k}">${v}</button>`).join('')}</div>
+    <div class="muted">当選契機</div>
+    <div class="seg" style="margin-bottom:8px">${Object.entries(K.TRIGGERS).map(([k,v])=>`<button class="${d.trigger===k?'on':''}" data-a="czSet" data-t="${tgt}" data-f="trigger" data-v="${k}">${v}</button>`).join('')}</div>
+    ${d.trigger==='kitei' ? `<div class="muted">当選G数（複数選択可：200or300Gなど）</div><div class="chips" style="margin-bottom:8px">${gchips}</div>` : ''}
+    ${d.trigger==='rare' ? `<div class="fld" style="margin-bottom:8px">当選範囲（自動入力・修正可）<input type="text" data-c="czRange" data-t="${tgt}" value="${esc(d.range || rangeDef)}"></div>
+      <div class="muted">当選時の状態</div>
+      <div class="seg" style="margin-bottom:8px">${Object.entries(K.RARE_STATE).map(([k,v])=>`<button class="sm ${(d.state||'normal')===k?'on':''}" data-a="czSet" data-t="${tgt}" data-f="state" data-v="${k}">${v}</button>`).join('')}</div>
+      <div class="muted">当選役</div>
+      <div class="chips" style="margin-bottom:8px">${Object.entries(K.RARE_ROLES).map(([k,v])=>`<button class="chip ${(d.role||'unk')===k?'on':''}" data-a="czSet" data-t="${tgt}" data-f="role" data-v="${k}">${v}</button>`).join('')}</div>` : ''}
+    ${preSel(tgt, d)}`;
+  if(!cz){
+    body += `<div class="grid2"><button class="big-btn okb" data-a="czCommit" data-v="ok">CZ成功 → AT</button><button class="big-btn ngb" data-a="czCommit" data-v="ng">CZ失敗 → 終了カード</button></div>`;
+    const prev = idx>0 ? S.segs[idx-1] : null;
+    const canHiki = prev && prev.cz && prev.cz.result==='ok' && prev.at && !prev.at.arima;
+    body += `<div class="muted" style="margin-top:10px">CZを経由しないAT（EPボーナス・直撃は上の当選契機・G数も一緒に記録されます）</div><div class="grid3">
+      <button class="sm accb" data-a="routeCommit" data-v="ep">エピソード<br>ボーナス</button>
+      <button class="sm accb" data-a="routeCommit" data-v="direct">AT直撃</button>
+      <button class="sm accb" data-a="routeCommit" data-v="hiki" ${canHiki?'':'disabled'}>AT引き戻し</button></div>`;
+    return `<div class="box"><h3>CZ当選</h3>${body}</div>`;
+  }
+  if(cz.route) return `<div class="box"><h3>当選記録（区間${idx+1}）</h3><div style="font-size:14px">${cz.route==='hiki'?'':esc(czWhere(cz,seg))+' → '}${K.ROUTES[cz.route]} → AT</div>${cz.route==='ep' ? '<div style="margin-top:8px">'+preSel('cz', cz)+'</div>' : ''}<div class="muted">契機・G数を変える場合は区間を削除するか「1つ戻す」で入力し直してください</div></div>`;
+  // 記録済み（過去区間・AT中区間）の編集
+  if(cz.result==='ng'){
+    body += `<div class="fld">CZ終了カード<select data-c="czCard">${K.CARDS.map(c=>`<option value="${c.id}" ${cz.card===c.id?'selected':''}>${esc(c.name)}（${esc(c.label)}）</option>`).join('')}</select></div>`;
+  }
+  if(!isLast) body += `<div class="seg" style="margin-top:8px"><span class="muted">結果：</span>
+      <button class="sm ${cz.result==='ok'?'on':''}" data-a="czSet" data-t="cz" data-f="result" data-v="ok">成功</button>
+      <button class="sm ${cz.result==='ng'?'on':''}" data-a="czSet" data-t="cz" data-f="result" data-v="ng">失敗</button></div>`;
+  return `<div class="box"><h3>CZ記録（区間${idx+1}）</h3>${body}</div>`;
+}
+
+function atPanel(seg, idx, live){
+  const at = seg.at;
+  const bl = bitesOf(at);
+  const total = bl.reduce((a,b)=>a+bitesAmt(b),0);
+  const kake = ENGINE.kakenuke(at);
+  let n = 0;
+  const list = (at.sets||[]).map((x,i,arr) => {
+    if(x.k==='judge') return `<li><span class="f" style="color:${x.ok?'var(--ok)':'var(--ng)'}">有馬ジャッジメント${x.ok?'成功 → '+(x.ura?'裏AT':'通常AT'):'失敗'}</span><button class="sm" data-a="judgeDel" data-i="${i}">削除</button></li>`;
+    n++; const o = oppOf(x.opp);
+    const r = x.res==='bites' ? 'BITES：'+bitesLine(x.bites) : x.res==='arima' ? '勝利（ジャッジメント権利）' : i < arr.length-1 ? '決着前にジャッジメントへ' : at.ended ? 'AT終了' : '対戦中';
+    return `<li><span class="f">${n}戦目 vs <b>${esc(o.name)}</b>${x.lose?` <span class="muted">敗北${x.lose}</span>`:''}<br><span class="muted">${esc(r)}</span></span><button class="sm" data-a="setEdit" data-i="${i}">編集</button></li>`;
+  }).join('');
+  let ctrl = '';
+  if(!at.ended){
+    const open = lastOpenSet(at);
+    if(open){
+      const o = oppOf(open.opp);
+      ctrl = `<div class="czpanel" style="border:2px solid var(--acc2);border-radius:12px;padding:10px;margin-top:8px">
+        <div style="font-weight:bold;margin-bottom:8px">${n}戦目 vs ${esc(o.name)}${o.p!=null?` <span class="muted">勝利期待度${o.p}%</span>`:''}${open.lose?` <span class="muted">敗北${open.lose}回</span>`:''}</div>
+        <div class="grid2">${open.opp==='arima'
+          ? `<button class="big-btn okb" data-a="winArima">勝利<br>→ ジャッジメント権利</button>`
+          : `<button class="big-btn okb" data-a="winBites">勝利 → BITES</button>`}
+          <button class="big-btn" data-a="loseBattle">敗北（同じ相手で継続）</button></div></div>`;
+    }else{
+      ctrl = `<div class="muted" style="margin-top:8px">${n ? '次の対戦相手を選択' : '対戦相手を選択'}</div>
+        <div class="grid3" style="margin-top:4px">${K.OPPONENTS.map(o=>`<button data-a="oppPick" data-v="${o.id}"><b>${esc(o.name)}</b>${o.p!=null?`<br><span class="muted">${o.p}%</span>`:''}</button>`).join('')}</div>`;
+    }
+  }
+  const rights = judgeRights(at);
+  let endArea;
+  if(!at.ended){
+    endArea = `<button class="big-btn accb" style="width:100%;margin-top:10px" data-a="atEndAsk">AT終了${rights>0?'（有馬ジャッジメントへ）':''}</button>
+      <div class="muted" style="margin-top:6px">${rights>0?'有馬撃破・エンディング後の権利があるので、終了時にジャッジメントの成否を選びます。':'BITES・百足覚醒・隻眼の梟が0回のままAT終了 → 駆け抜け（次回通常B以上？）'}</div>`;
+  }else{
+    endArea = `<div style="margin-top:8px;font-size:13px">終了：${at.arima?'有馬ジャッジメント失敗 → 次回天国？':kake?'駆け抜け → 次回通常B以上？':'駆け抜け回避'}</div>
+      <div class="fld" style="margin-top:8px">AT終了画面（設定示唆）<select data-c="atEndScreen"><option value="">—（未確認）</option>${K.AT_END.map(e=>`<option value="${e.id}" ${at.endScreen===e.id?'selected':''}>${esc(e.name)}（${esc(e.label)}）</option>`).join('')}</select></div>`;
+  }
+  return `<div class="box ${live?'atbox':''}"><h3>AT記録（区間${idx+1}）<span class="tag" style="${curUra(at)?'color:#b98cff;font-weight:bold':''}">${curUra(at)?'裏AT':'通常AT'}</span></h3>
+    <div class="atsum"><div><span>BITES</span><b>${bl.length}回</b></div><div><span>BITES報酬合計</span><b>${total}枚</b></div><div><span>特化ゾーン</span><b>${at.muka+at.owl}回</b></div></div>
+    ${list ? `<ul class="list">${list}</ul>` : ''}
+    ${ctrl}
+    <div class="grid2" style="margin-top:10px">
+      <div class="cnt"><span class="muted" style="flex:1">百足覚醒</span><button class="sm" data-a="atCnt" data-f="muka" data-v="-1">−</button><span class="n">${at.muka}</span><button data-a="atCnt" data-f="muka" data-v="1">＋1</button></div>
+      <div class="cnt"><span class="muted" style="flex:1">隻眼の梟</span><button class="sm" data-a="atCnt" data-f="owl" data-v="-1">−</button><span class="n">${at.owl}</span><button data-a="atCnt" data-f="owl" data-v="1">＋1</button></div>
+    </div>
+    ${edBlock(at)}
+    ${endArea}
+  </div>`;
+}
+
+function edBlock(at){
+  if(!at.ending) return `<button class="big-btn" style="width:100%;margin-top:10px;border-color:#b98cff;color:#b98cff" data-a="edStart">エンディング突入</button>`;
+  const ed = at.ed || {};
+  const n = Object.values(ed).reduce((a,b)=>a+b,0);
+  const grp = Object.entries(K.ED_GROUP).map(([g,gl]) => `<div class="muted" style="margin-top:8px">${gl}</div>` +
+    K.ED_CARDS.filter(c=>c.g===g).map(c => `<div class="crow" style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid var(--line)">
+      <span style="flex:1;font-size:13px">${esc(c.name)} <span class="muted">${esc(c.label)}</span></span>
+      <button class="sm" data-a="edCnt" data-id="${c.id}" data-v="-1">−</button><span style="min-width:24px;text-align:center;font-weight:bold">${ed[c.id]||0}</span>
+      <button data-a="edCnt" data-id="${c.id}" data-v="1">＋1</button></div>`).join('')).join('');
+  return `<details open style="margin-top:10px;border:1px solid #b98cff;border-radius:10px;padding:8px"><summary style="color:#b98cff;font-weight:bold">エンディング中（カード ${n}枚）</summary>${grp}
+    <button class="sm" style="margin-top:8px" data-a="edCancel">エンディングの記録を取り消す</button></details>`;
+}
+function edSummary(ed){
+  const g = {w:0,b:0,r:0,s:0};
+  K.ED_CARDS.forEach(c => g[c.g] += (ed && ed[c.id]) || 0);
+  return g;
+}
+function historyPanel(R){
+  const sel = curIdx();
+  const items = S.segs.map((seg,i) => {
+    const lines = segLines(i, R);
+    const zdet = K.ZONES.map(g => `${g}G:${K.ZONE_LABEL[ENGINE.zoneOf(seg,g)]}`).join(' / ');
+    const idet = seg.inv.length ? seg.inv.slice().sort((a,b)=>a.g-b.g).map(iv=>{const d=K.INVITES.find(x=>x.id===iv.id);return `${iv.g}G:${d?d.text:''}`;}).join(' / ') : 'なし';
+    const edet = seg.eye.length ? seg.eye.map(e=>(K.EYES.find(x=>x.id===e.id)||{}).name).join(' → ') : 'なし';
+    return `<div class="tlseg ${i===sel?'sel':''}">
+      <div class="tlhead"><span class="t">区間${i+1}（${startLabel(i)}）：<span class="${R[i].kind==='q'?'hint':''}" ${R[i].kind==='warn'?'style="color:var(--ng)"':''}>${esc(R[i].main)}</span></span>
+        <span>${i===sel?'<span class="tag">表示中</span>':`<button class="sm" data-a="sel" data-i="${i}">編集</button>`} <button class="sm" data-a="segDelAsk" data-i="${i}" ${S.segs.length<2?'disabled':''}>削除</button></span></div>
+      ${lines.map(l=>`<div class="tlline">${esc(l)}</div>`).join('')}
+      <details><summary>詳細（前兆・招待状・アイキャッチ）</summary><div class="det">前兆：${esc(zdet)}<br>招待状：${esc(idet)}<br>アイキャッチ：${esc(edet)}</div></details>
+    </div>`;
+  }).join('');
+  return `<div class="box"><h3>実戦履歴</h3><div class="tl">${items}</div></div>`;
+}
+
+function settingStats(){
+  const inv = {}, card = {}, ate = {};
+  S.segs.forEach(seg => {
+    seg.inv.forEach(iv => { const d=K.INVITES.find(x=>x.id===iv.id); if(d&&d.k==='s') inv[d.label]=(inv[d.label]||0)+1; });
+    const c = seg.cz && seg.cz.result==='ng' && K.CARDS.find(x=>x.id===seg.cz.card); if(c&&c.t==='s') card[c.name+'（'+c.label+'）']=(card[c.name+'（'+c.label+'）']||0)+1;
+    const e = seg.at && seg.at.ended && K.AT_END.find(x=>x.id===seg.at.endScreen); if(e&&e.id!=='kaneki') ate[e.name+'（'+e.label+'）']=(ate[e.name+'（'+e.label+'）']||0)+1;
+  });
+  return {inv, card, ate};
+}
+function czStats(){
+  const o = {}; Object.keys(K.CZ_TYPES).forEach(k=>o[k]={n:0,ok:0});
+  S.segs.forEach(s => { if(s.cz && s.cz.result && !s.cz.route){ o[s.cz.type].n++; if(s.cz.result==='ok') o[s.cz.type].ok++; } });
+  return o;
+}
+function in100Of(i){
+  const seg = S.segs[i], cz = seg.cz;
+  if(i===0 && S.asa) return null;
+  if(cz && cz.route!=='hiki' && cz.trigger==='kitei' && cz.gs.length) return Math.max(...cz.gs) <= 100;
+  if(cz && cz.route!=='hiki' && cz.trigger==='rare'){ const n = parseInt(cz.range,10); if(!isNaN(n) && n >= 100) return false; return null; }
+  return ENGINE.maxReached(seg) >= 150 ? false : null;
+}
+function settingFactors(){
+  const games = Number(S.meta.games) || 0;
+  const atFirst = S.segs.filter(s=>s.cz && s.cz.result==='ok' && s.cz.route!=='hiki').length;
+  const czAll = S.segs.filter(s=>s.cz && s.cz.result && !s.cz.route);
+  const remi = czAll.filter(s=>s.cz.type==='remi').length, rize = czAll.filter(s=>s.cz.type==='rize').length;
+  const ep = S.segs.filter(s=>s.cz && s.cz.route==='ep').length;
+  const grp = {all:[0,0], at:[0,0], cz:[0,0], first:[0,0]};
+  S.segs.forEach((s,i) => { const r = in100Of(i); if(r===null) return;
+    const p = i===0 ? 'first' : (S.segs[i-1].cz && S.segs[i-1].cz.result==='ok') ? 'at' : 'cz';
+    grp.all[1]++; grp[p][1]++; if(r){ grp.all[0]++; grp[p][0]++; } });
+  let hn = 0, hd = 0;
+  S.segs.forEach((s,i) => { if(i<S.segs.length-1 && s.at && s.at.ended && !s.at.arima && s.cz && s.cz.result==='ok'){ hd++; const nx = S.segs[i+1]; if(nx.cz && nx.cz.route==='hiki') hn++; } });
+  const firstATs = S.segs.filter(s=>s.cz && s.cz.result==='ok' && s.cz.route!=='hiki' && s.at);
+  const uraN = firstATs.filter(s=>s.at.ura).length;
+  const den = (n) => games && n ? games/n : null;
+  const rows = {
+    at:{val:den(atFirst), raw:`${atFirst}回`},
+    cz:{val:den(czAll.length), raw:`${czAll.length}回`},
+    remi:{val:den(remi), raw:`${remi}回`},
+    rize:{val:den(rize), raw:`${rize}回`},
+    ep:{val:den(ep), raw:`${ep}回`},
+    in100:{val:grp.all[1]?grp.all[0]/grp.all[1]*100:null, raw:`${grp.all[0]}/${grp.all[1]}`},
+    hiki:{val:hd?hn/hd*100:null, raw:`${hn}/${hd}`},
+    ura:{val:firstATs.length?uraN/firstATs.length*100:null, raw:`${uraN}/${firstATs.length}`},
+  };
+  return {games, rows, grp};
+}
+function nearestSetting(def, val){
+  if(val == null) return '—';
+  let best = 0, d = Infinity;
+  def.v.forEach((x,i) => { const diff = def.p==='den' ? Math.abs(1/x - 1/val) : Math.abs(x - val); if(diff < d){ d = diff; best = i; } });
+  // 設定1・2が同値の項目
+  const same = def.v.map((x,i)=>x===def.v[best]?i+1:null).filter(Boolean);
+  return '設定'+same.join('・')+'寄り';
+}
+/* ---------- AT終了後のモード移行（このツールの主目的） ---------- */
+function atAfterRows(R){
+  const rows = [];
+  S.segs.forEach((seg,i) => {
+    if(i === 0) return;
+    const p = S.segs[i-1];
+    if(!(p.cz && p.cz.result==='ok' && p.at && p.at.ended)) return;
+    const kind = p.at.arima ? 'arima' : ENGINE.kakenuke(p.at) ? 'kake' : 'normal';
+    const r = R[i], fin = r.fin || r.logical, fh = r.finHint && r.finHint.length ? r.finHint : fin;
+    let cat;
+    if(!fin.length || r.kind==='warn') cat = 'warn';
+    else if(fin.every(m=>m>=2)) cat = 'cFix';
+    else if(fin.every(m=>m<=1)) cat = 'bFix';
+    else if(fh.every(m=>m>=2)) cat = 'cQ';
+    else if(fh.every(m=>m<=1)) cat = 'bQ';
+    else cat = 'unk';
+    rows.push({i, kind, cat, fin, label: !fin.length ? '要確認' : ENGINE.setLabel(fin) + (fh.length < fin.length ? '（示唆：'+ENGINE.setLabel(fh)+'）' : ''), back:r.backNarrowed});
+  });
+  return rows;
+}
+const CAT_LABEL = {cFix:'C以上確定', cQ:'C以上？', bFix:'B以下確定', bQ:'B以下？', unk:'判別不可', warn:'要確認'};
+const KIND_LABEL = {normal:'通常AT終了後', kake:'駆け抜け後', arima:'有馬失敗後'};
+function atAfterSummary(rows){
+  const sum = {}; Object.keys(KIND_LABEL).concat('all').forEach(k => sum[k] = {n:0, cFix:0, cQ:0, bFix:0, bQ:0, unk:0, warn:0});
+  rows.forEach(x => { [x.kind,'all'].forEach(k => { sum[k].n++; sum[k][x.cat]++; }); });
+  Object.values(sum).forEach(o => { const c = o.cFix+o.cQ, b = o.bFix+o.bQ; o.c = c; o.judged = c+b; o.rate = o.judged ? c/o.judged*100 : null; });
+  return sum;
+}
+function atAfterPanel(R){
+  const rows = atAfterRows(R), sm = atAfterSummary(rows);
+  const line = (k) => { const o = sm[k]; return `<tr ${k==='all'?'style="font-weight:bold"':''}><td>${k==='all'?'合計':KIND_LABEL[k]}</td><td>${o.n}</td><td>${o.cFix}</td><td>${o.cQ}</td><td>${o.bFix}</td><td>${o.bQ}</td><td>${o.unk+o.warn}</td><td>${o.rate==null?'—':o.rate.toFixed(1)+'%'}</td></tr>`; };
+  const list = rows.map(x => `<li><span class="f">区間${x.i+1}（${KIND_LABEL[x.kind]}）：${esc(x.label)}${x.back?' <span class="tag">後の区間から逆算</span>':''}</span><span class="tag" style="${x.cat[0]==='c'?'color:var(--ok)':x.cat[0]==='b'?'color:var(--ng)':''}">${CAT_LABEL[x.cat]}</span></li>`).join('');
+  const a = sm.all;
+  return `<div class="box est"><h3>AT終了後のモード移行（C以上にどれだけ来たか）</h3>
+    <div class="big">${a.judged ? `${a.c}/${a.judged}（${a.rate.toFixed(1)}%）` : '—'}</div>
+    <div class="muted">判別できたAT後区間のうちC以上の割合（確定＋示唆）。有馬失敗後（天国濃厚）を除くと：${sm.normal.judged+sm.kake.judged ? `${sm.normal.c+sm.kake.c}/${sm.normal.judged+sm.kake.judged}（${((sm.normal.c+sm.kake.c)/(sm.normal.judged+sm.kake.judged)*100).toFixed(1)}%）` : '—'}</div>
+    <div style="overflow-x:auto;margin-top:8px"><table style="white-space:nowrap"><tr><th></th><th>件数</th><th>C以上確定</th><th>C以上？</th><th>B以下確定</th><th>B以下？</th><th>判別不可</th><th>C以上率</th></tr>
+      ${['normal','kake','arima','all'].map(line).join('')}</table></div>
+    ${list ? `<ul class="list" style="margin-top:8px">${list}</ul>` : '<div class="muted" style="margin-top:6px">AT終了後の区間がまだありません</div>'}
+    <div class="muted" style="margin-top:6px">AT後の区間は、その区間の当選G数に加え、CZ失敗後の非転落を使って後の区間からも逆算して絞り込みます（例：AT後200Gでスルー→次が500G当選なら、AT後は通常A・Cのどちらか）。「？」は示唆込みの判定で、解析値ではなく実戦の傾向を見るためのものです。</div>
+  </div>`;
+}
+/* ---------- リゼ・EPボーナスのレア役有無 ---------- */
+function rizeEpTable(){
+  const games = Number(S.meta.games) || 0;
+  const t = {rize:{no:0,yes:0,unk:0}, ep:{no:0,yes:0,unk:0}};
+  S.segs.forEach(s => { const c = s.cz; if(!c || !c.result) return;
+    if(!c.route && c.type==='rize') t.rize[preOf(c)]++;
+    if(c.route==='ep') t.ep[preOf(c)]++; });
+  const p = n => games && n ? '1/'+(games/n).toFixed(1) : '—';
+  return {t, p};
+}
+/* ---------- 対戦相手 ---------- */
+function oppStats(){
+  const t = {}; K.OPPONENTS.forEach(o => t[o.id] = {sets:0, win:0, battles:0});
+  S.segs.forEach(s => (s.at && s.at.sets || []).forEach((x,i,arr) => { if(x.k!=='set') return;
+    const o = t[x.opp] || t.unk, won = x.res==='bites' || x.res==='arima';
+    o.sets++; o.battles += (x.lose||0) + (won?1:0); if(won) o.win++; }));
+  return t;
+}
+/* ---------- エンディングカード ---------- */
+function edStats(){
+  const tot = {}; let eds = 0;
+  S.segs.forEach(s => { if(s.at && s.at.ending){ eds++; Object.entries(s.at.ed||{}).forEach(([k,v]) => tot[k] = (tot[k]||0) + v); } });
+  const g = edSummary(tot), n = g.w+g.b+g.r+g.s;
+  return {eds, tot, g, n};
+}
+/* ---------- レア役解除の内訳 ---------- */
+function rareTable(){
+  const t = {};
+  Object.keys(K.RARE_ROLES).forEach(r => t[r] = {normal:{n:0,rize:0,ep:0}, super:{n:0,rize:0,ep:0}});
+  S.segs.forEach(s => { const c = s.cz; if(!c || !c.result || c.route==='hiki' || c.trigger!=='rare') return;
+    const o = t[c.role||'unk'][c.state||'normal']; o.n++;
+    if(!c.route && c.type==='rize') o.rize++;
+    if(c.route==='ep') o.ep++; });
+  return t;
+}
+/* ---------- スルー回数別の当選G分布（noteの0スルー集計向け） ---------- */
+const BUCKETS = ['100','200','300','400','500','600','レア役','不明'];
+function bucketOf(seg){
+  const cz = seg.cz;
+  if(!cz || !cz.result || cz.route==='hiki') return null;
+  if(cz.trigger==='kitei' && cz.gs.length){ const g = Math.max(...cz.gs); return g <= 150 ? '100' : String(Math.floor(g/100)*100); }
+  if(cz.trigger==='rare') return 'レア役';
+  return '不明';
+}
+function thruOf(i){
+  if(i === 0) return S.asa ? '朝一' : '打ち始め';
+  let n = 0;
+  for(let j = i-1; j >= 0; j--){
+    const c = S.segs[j].cz;
+    if(c && c.result==='ok') return n >= 3 ? '3スルー以上' : n+'スルー';
+    n++;
+    if(j === 0) return S.asa ? '朝一後'+n+'スルー' : '打ち始め後';
+  }
+}
+function thruTable(){
+  const order = ['朝一','0スルー','1スルー','2スルー','3スルー以上','打ち始め','打ち始め後'];
+  const t = {};
+  S.segs.forEach((s,i) => { const b = bucketOf(s); if(!b) return; let k = thruOf(i); if(/^朝一後/.test(k)) k = '打ち始め後';
+    t[k] = t[k] || Object.fromEntries(BUCKETS.map(x=>[x,0])); t[k][b]++; });
+  const total = Object.fromEntries(BUCKETS.map(x=>[x,0]));
+  Object.values(t).forEach(r => BUCKETS.forEach(x => total[x] += r[x]));
+  const rows = order.filter(k=>t[k]).map(k=>[k,t[k]]);
+  rows.push(['合計', total]);
+  return rows.map(([k,r]) => { const n = BUCKETS.reduce((a,x)=>a+r[x],0); const kn = n - r['レア役'] - r['不明'];
+    const w300 = r['100']+r['200']+r['300']; return {k, r, n, rate300: kn ? w300/kn*100 : null}; });
+}
+const fmtVal = (def, val) => val == null ? '—' : def.p==='den' ? '1/'+val.toFixed(1) : val.toFixed(1)+'%';
+function settingPanel(){
+  const st = settingStats(), cs = czStats();
+  const rows = (obj) => Object.keys(obj).length ? Object.entries(obj).map(([k,v])=>`<tr><td>${esc(k)}</td><td>${v}回</td></tr>`).join('') : '<tr><td class="muted" colspan="2">なし</td></tr>';
+  const sf = settingFactors();
+  const pct = a => a[1] ? `${a[0]}/${a[1]}（${(a[0]/a[1]*100).toFixed(1)}%）` : '—';
+  const factorRows = K.SETTING.map(def => { const r = sf.rows[def.id];
+    return `<tr><td>${def.name}</td><td>${r.raw}</td><td>${fmtVal(def,r.val)}</td><td>${nearestSetting(def,r.val)}</td></tr>`; }).join('');
+  const refRows = K.SETTING.map(def => `<tr><td>${def.name}</td>${def.v.map(x=>`<td>${def.p==='den'?'1/'+x:x+'%'}</td>`).join('')}</tr>`).join('');
+  const setBox = `<div class="box"><h3>設定推測要素</h3>
+    ${sf.games ? '' : '<div class="muted" style="margin-bottom:6px">総ゲーム数を入れると確率系の項目が計算されます</div>'}
+    <div style="overflow-x:auto"><table><tr><th>項目</th><th>実戦</th><th>確率</th><th>近い設定</th></tr>${factorRows}</table></div>
+    <table style="margin-top:8px"><tr><th>100G以内CZ当選（区間の始まり別）</th><th></th></tr>
+      <tr><td>AT終了後</td><td>${pct(sf.grp.at)}</td></tr><tr><td>CZ失敗後</td><td>${pct(sf.grp.cz)}</td></tr><tr><td>打ち始め（朝一除く）</td><td>${pct(sf.grp.first)}</td></tr></table>
+    <div class="muted" style="margin-top:6px">100G以内の判定：規定G数で100G以内に当選＝当選。100Gを過ぎてからの当選・通過＝非当選。100G前のレア役解除や当選G不明は集計から外します。AT初当たりは引き戻しを除いて数えています。</div>
+    <details><summary>設定別の解析値</summary><div style="overflow-x:auto"><table><tr><th>項目</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th></tr>${refRows}</table></div></details>
+  </div>`;
+  const tt = thruTable();
+  const thruBox = `<div class="box"><h3>スルー回数別の当選G分布</h3>
+    <div style="overflow-x:auto"><table style="white-space:nowrap"><tr><th></th>${BUCKETS.map(b=>`<th>${b}</th>`).join('')}<th>計</th><th>300G以内</th></tr>
+    ${tt.map(x=>`<tr ${x.k==='合計'?'style="font-weight:bold"':''}><td>${x.k}</td>${BUCKETS.map(b=>`<td>${x.r[b]||''}</td>`).join('')}<td>${x.n}</td><td>${x.rate300==null?'—':x.rate300.toFixed(1)+'%'}</td></tr>`).join('')}</table></div>
+    <div class="muted" style="margin-top:6px">集計ルール：50・150G→100、250→200、350→300…と直前の100G区切りにまとめ、「200or300」のような複数選択は悪い方（大きい方）で数えます。EPボーナス・直撃も当選Gで数え、引き戻しは除きます。0スルー＝AT終了後の最初の当選。300G以内の割合はレア役・不明を除いて計算します。</div>
+    <div class="muted" style="margin-top:4px">参考（noteの筆者による実戦値・解析値ではありません）：300G以内当選 設定6 約77%／設定4 約58%</div>
+  </div>`;
+  const re = rizeEpTable();
+  const reRow = (name,o) => `<tr><td>${name}</td><td>${o.no}（${re.p(o.no)}）</td><td>${o.yes}（${re.p(o.yes)}）</td><td>${o.unk}</td></tr>`;
+  const reBox = `<div class="box"><h3>大喰いのリゼ・EPボーナス（前兆中レア役の有無）</h3>
+    <div style="overflow-x:auto"><table style="white-space:nowrap"><tr><th></th><th>レア役なし</th><th>レア役あり</th><th>不明</th></tr>
+    ${reRow('大喰いのリゼ', re.t.rize)}${reRow('EPボーナス', re.t.ep)}</table></div>
+    <div class="muted" style="margin-top:6px">レア役なし＝規定G数・モード由来と考えられる当選（高設定のモード移行の良さが出やすい側）。レア役解除の当選は自動で「レア役あり」になります。確率は総ゲーム数から計算。</div></div>`;
+  const rt = rareTable();
+  const cell = o => o.n ? `${o.n}${o.rize||o.ep?`<span class="muted">（リゼ${o.rize}・EP${o.ep}）</span>`:''}` : '';
+  const tot = st => Object.values(rt).reduce((a,x)=>a+x[st].n,0);
+  const rareBox = `<div class="box"><h3>レア役解除の内訳</h3>
+    <div style="overflow-x:auto"><table style="white-space:nowrap"><tr><th>当選役</th><th>通常時</th><th>超高確</th></tr>
+    ${Object.entries(K.RARE_ROLES).map(([k,v])=>`<tr><td>${v}</td><td>${cell(rt[k].normal)}</td><td>${cell(rt[k].super)}</td></tr>`).join('')}
+    <tr style="font-weight:bold"><td>合計</td><td>${tot('normal')}</td><td>${tot('super')}</td></tr></table></div>
+    <div class="muted" style="margin-top:6px">CZ・EPボーナス・直撃のうち、当選契機を「レア役解除」にしたものを集計（カッコ内は上位CZリゼ・EPボーナスの件数）。</div></div>`;
+  const es = edStats();
+  const pr = x => es.n ? ` <span class="muted">${(x/es.n*100).toFixed(1)}%</span>` : '';
+  const edBox = `<div class="box"><h3>エンディングカード（${es.eds}回・${es.n}枚）</h3>
+    <table><tr><th>種類</th><th>枚数</th></tr>
+      <tr><td>${K.ED_GROUP.w}</td><td>${es.g.w}${pr(es.g.w)}</td></tr><tr><td>${K.ED_GROUP.b}</td><td>${es.g.b}${pr(es.g.b)}</td></tr>
+      <tr><td>${K.ED_GROUP.r}</td><td>${es.g.r}${pr(es.g.r)}</td></tr><tr><td>${K.ED_GROUP.s}</td><td>${es.g.s}</td></tr></table>
+    ${K.ED_CARDS.filter(c=>c.g==='s'&&es.tot[c.id]).map(c=>`<div class="tlline">${esc(c.name)}（${esc(c.label)}）×${es.tot[c.id]}</div>`).join('')}
+    <div class="muted" style="margin-top:6px">参考（noteの筆者の見立て・解析値ではありません）：赤カードが約20%出ていれば設定6に期待。</div></div>`;
+  const os = oppStats();
+  const oppBox = `<div class="box"><h3>AT中の対戦相手</h3>
+    <div style="overflow-x:auto"><table style="white-space:nowrap"><tr><th>相手</th><th>選択</th><th>勝利/対決</th><th>勝率</th><th>期待度</th></tr>
+    ${K.OPPONENTS.filter(o=>o.id!=='unk'||os.unk.sets).map(o=>{ const x = os[o.id]; return `<tr><td>${esc(o.name)}</td><td>${x.sets}</td><td>${x.win}/${x.battles}</td><td>${x.battles?(x.win/x.battles*100).toFixed(1)+'%':'—'}</td><td>${o.p!=null?o.p+'%':'—'}</td></tr>`; }).join('')}</table></div>
+    <div class="muted" style="margin-top:6px">対決数＝敗北回数＋勝利。AT終了で決着しなかった対戦は勝利に入りません。</div></div>`;
+  return atAfterPanel(ENGINE.run(S)) + setBox + reBox + rareBox + oppBox + edBox + thruBox + `<div class="box"><h3>集計</h3>
+    <table><tr><th>CZ</th><th>成功/回数</th></tr>${Object.entries(cs).map(([k,v])=>`<tr><td>${K.CZ_TYPES[k]}</td><td>${v.ok}/${v.n}（${v.n?(v.ok/v.n*100).toFixed(1)+'%':'—'}）</td></tr>`).join('')}</table>
+    <table style="margin-top:8px"><tr><th>月山招待状（設定示唆）</th><th></th></tr>${rows(st.inv)}</table>
+    <table style="margin-top:8px"><tr><th>CZ終了カード（設定示唆）</th><th></th></tr>${rows(st.card)}</table>
+    <table style="margin-top:8px"><tr><th>AT終了画面</th><th></th></tr>${rows(st.ate)}</table></div>`;
+}
+
+/* ---------- テキスト出力 ---------- */
+function textOut(){
+  const R = ENGINE.run(S), M = S.meta, cs = czStats(), st = settingStats();
+  const ats = S.segs.filter(s=>s.cz&&s.cz.result==='ok');
+  const total = ats.reduce((a,s)=>a+bitesOf(s.at).reduce((x,b)=>x+bitesAmt(b),0),0);
+  const czN = S.segs.filter(s=>s.cz&&s.cz.result).length;
+  const L = ['【L東京喰種 実践記録】',
+    `日付：${M.date?M.date.replace(/-/g,'/'):'—'}`, `店舗名：${M.store||'—'}`, `台番号：${M.no||'—'}`, `総ゲーム数：${M.games?M.games+'G':'—'}`,
+    `CZ回数：${czN}回　AT回数：${ats.length}回`, `BITES報酬合計：${total}枚`];
+  const aRows = atAfterRows(R), aSm = atAfterSummary(aRows);
+  L.push('', '■AT終了後のモード移行');
+  L.push(`C以上：${aSm.all.judged ? `${aSm.all.c}/${aSm.all.judged}（${aSm.all.rate.toFixed(1)}%）` : '—'}　※判別できた区間のみ（確定＋示唆）`);
+  ['normal','kake','arima'].forEach(k => { const o = aSm[k]; if(o.n) L.push(`${KIND_LABEL[k]}：${o.n}件　C以上確定${o.cFix}／C以上？${o.cQ}／B以下確定${o.bFix}／B以下？${o.bQ}／判別不可${o.unk+o.warn}`); });
+  aRows.forEach(x => L.push(`　区間${x.i+1}（${KIND_LABEL[x.kind]}）：${x.label} → ${CAT_LABEL[x.cat]}`));
+  L.push('', '■実戦履歴');
+  S.segs.forEach((s,i) => {
+    L.push(`[区間${i+1}] ${startLabel(i)}：${R[i].main}`);
+    segLines(i,R).forEach(l => L.push('　'+l));
+  });
+  const sf = settingFactors();
+  L.push('', '■設定推測要素');
+  K.SETTING.forEach(def => { const r = sf.rows[def.id]; L.push(`${def.name}　${r.raw}　${fmtVal(def,r.val)}　${nearestSetting(def,r.val)}`); });
+  const pc = a => a[1] ? `${a[0]}/${a[1]}（${(a[0]/a[1]*100).toFixed(1)}%）` : '—';
+  L.push(`100G以内CZ当選（AT終了後）　${pc(sf.grp.at)}`, `100G以内CZ当選（CZ失敗後）　${pc(sf.grp.cz)}`);
+  const re = rizeEpTable();
+  L.push('', '■リゼ・EPボーナス（前兆中レア役の有無）');
+  [['大喰いのリゼ',re.t.rize],['EPボーナス',re.t.ep]].forEach(([n,o]) => L.push(`${n}　レア役なし${o.no}（${re.p(o.no)}）／レア役あり${o.yes}（${re.p(o.yes)}）／不明${o.unk}`));
+  const os = oppStats();
+  L.push('', '■AT中の対戦相手（勝利/対決）');
+  const ol = K.OPPONENTS.filter(o=>os[o.id].sets);
+  if(!ol.length) L.push('なし');
+  ol.forEach(o => { const x = os[o.id]; L.push(`${o.name}　選択${x.sets}　${x.win}/${x.battles}${x.battles?'（'+(x.win/x.battles*100).toFixed(1)+'%）':''}${o.p!=null?'　期待度'+o.p+'%':''}`); });
+  const es = edStats();
+  L.push('', `■エンディングカード（${es.eds}回・${es.n}枚）`);
+  const pc2 = x => es.n ? `（${(x/es.n*100).toFixed(1)}%）` : '';
+  L.push(`奇数示唆（白）${es.g.w}${pc2(es.g.w)}／偶数示唆（青）${es.g.b}${pc2(es.g.b)}／高設定示唆（赤）${es.g.r}${pc2(es.g.r)}／特殊（銅・銀・金・虹）${es.g.s}`);
+  K.ED_CARDS.filter(c=>c.g==='s'&&es.tot[c.id]).forEach(c => L.push(`　${c.name}（${c.label}）×${es.tot[c.id]}`));
+  const rt = rareTable();
+  L.push('', '■レア役解除の内訳（通常時／超高確）');
+  const rl = Object.entries(K.RARE_ROLES).filter(([k])=>rt[k].normal.n||rt[k].super.n);
+  if(!rl.length) L.push('なし');
+  rl.forEach(([k,v]) => { const a = rt[k].normal, b = rt[k].super;
+    L.push(`${v}　通常時${a.n}（リゼ${a.rize}・EP${a.ep}）／超高確${b.n}（リゼ${b.rize}・EP${b.ep}）`); });
+  L.push('', '■スルー回数別の当選G分布（50・150→100／or→悪い方）');
+  thruTable().forEach(x => L.push(`${x.k}：` + BUCKETS.filter(b=>x.r[b]).map(b=>`${b}=${x.r[b]}`).join(' ') + `（計${x.n}／300G以内${x.rate300==null?'—':x.rate300.toFixed(1)+'%'}）`));
+  L.push('', '■CZ成功率');
+  Object.entries(cs).forEach(([k,v]) => L.push(`${K.CZ_TYPES[k]}　${v.ok}/${v.n}　成功率${v.n?(v.ok/v.n*100).toFixed(1)+'%':'—'}`));
+  const sec = (title,obj) => { L.push('', title); const e = Object.entries(obj); if(!e.length) L.push('なし'); e.forEach(([k,v])=>L.push(`${k}：${v}回`)); };
+  sec('■月山招待状（設定示唆）', st.inv);
+  sec('■CZ終了カード（設定示唆）', st.card);
+  sec('■AT終了画面', st.ate);
+  return L.join('\n');
+}
+
+/* ---------- モーダル ---------- */
+function modal(html){ document.getElementById('modalIn').innerHTML = html; document.getElementById('modal').classList.add('show'); }
+function closeModal(){ document.getElementById('modal').classList.remove('show'); }
+function toast(t){ const el=document.getElementById('toast'); el.textContent=t; el.classList.add('show'); setTimeout(()=>el.classList.remove('show'),1400); }
+
+function eyeModal(){
+  modal(`<h4>アイキャッチを記録（区間${curIdx()+1}）</h4>${K.EYES.map(e=>`<button class="opt" data-a="eyeAdd" data-v="${e.id}"><b>${esc(e.name)}</b><small>${esc(e.label)}${e.id!=='kaneki'?'？':''}</small></button>`).join('')}<button data-a="close" style="width:100%">閉じる</button>`);
+}
+function cardModal(){
+  modal(`<h4>CZ終了カードを選択</h4>${K.CARDS.map(c=>`<button class="opt ${c.t==='s'?'s':''}" data-a="cardPick" data-v="${c.id}"><b>${esc(c.name)}</b><small>${esc(c.label)}${c.t==='m'?'（次回区間に反映）':''}</small></button>`).join('')}<button data-a="close" style="width:100%">キャンセル</button>`);
+}
+let bitesTmp = null;
+function bitesModal(){
+  const b = bitesTmp;
+  let h = `<h4>BITESの報酬</h4><div class="muted" style="margin-bottom:6px">① 報酬テーブルを選択</div>`;
+  K.BITES.forEach(t => {
+    h += `<button class="opt ${b.tbl===t.id?'s':''}" data-a="bitesTbl" data-v="${t.id}" style="${b.tbl===t.id?'border-color:var(--acc2)':''}"><div class="btbl"><b>${t.name}</b>${[0,1,2,3,4].map(i=>`<span>${t.v[i]!=null?t.v[i]:'-'}</span>`).join('')}</div></button>`;
+  });
+  if(b.tbl){
+    const t = K.BITES.find(x=>x.id===b.tbl);
+    h += `<div class="muted" style="margin:8px 0 6px">② 到達段階を選択（報酬枚数）</div><div class="grid3">${t.v.map((v,i)=>`<button class="${b.stage===i+1?'chip on':''}" data-a="bitesStage" data-v="${i+1}">${i+1}段階<br><b>${v}枚</b></button>`).join('')}</div>`;
+  }
+  h += `<div class="grid2" style="margin-top:12px">${b.edit?`<button class="ngb" data-a="bitesDel">BITESを取り消す</button>`:`<button data-a="close">キャンセル</button>`}<button class="okb" data-a="bitesSave" ${b.tbl&&b.stage?'':'disabled'}>保存</button></div>`;
+  modal(h);
+}
+
+function setModal(i){
+  const x = curSeg().at.sets[i];
+  modal(`<h4>対戦の編集</h4><div class="muted">対戦相手</div>
+    <div class="chips" style="margin:4px 0 10px">${K.OPPONENTS.map(o=>`<button class="chip ${x.opp===o.id?'on':''}" data-a="setOpp" data-i="${i}" data-v="${o.id}">${esc(o.name)}</button>`).join('')}</div>
+    <div class="cnt" style="margin-bottom:10px"><span class="muted" style="flex:1">敗北回数</span><button class="sm" data-a="setLose" data-i="${i}" data-v="-1">−</button><span class="n">${x.lose||0}</span><button data-a="setLose" data-i="${i}" data-v="1">＋1</button></div>
+    <div class="muted">結果：${x.res==='bites'?'BITES：'+esc(bitesLine(x.bites)):x.res==='arima'?'勝利（ジャッジメント権利）':'勝利なし'}</div>
+    <div class="grid2" style="margin-top:8px">
+      <button data-a="setBites" data-i="${i}">BITESを入力・編集</button>
+      <button data-a="setArima" data-i="${i}">有馬に勝利（権利）</button>
+      <button data-a="setClear" data-i="${i}">結果をクリア</button>
+      <button class="ngb" data-a="setDel" data-i="${i}">この対戦を削除</button></div>
+    <button data-a="close" style="width:100%;margin-top:10px">閉じる</button>`);
+}
+let pendAT = null;
+function atStartModal(title){
+  modal(`<h4>${title}</h4><div class="grid2"><button class="big-btn accb" data-a="atStart" data-v="0">通常AT</button><button class="big-btn" style="border-color:#b98cff;color:#b98cff" data-a="atStart" data-v="1">裏AT</button></div><button data-a="close" style="width:100%;margin-top:10px">キャンセル</button>`);
+}
+function endScreenModal(k){
+  modal(`<h4>AT終了画面を選択${k==='arima'?'（有馬ジャッジメント失敗）':''}</h4>${K.AT_END.map(x=>`<button class="opt ${x.id!=='kaneki'?'s':''}" data-a="atEndPick" data-k="${k}" data-v="${x.id}"><b>${esc(x.name)}</b><small>${esc(x.label)}</small></button>`).join('')}
+    <button class="opt" data-a="atEndPick" data-k="${k}" data-v=""><b>確認できず</b><small>終了画面を見ていない</small></button>
+    <button data-a="close" style="width:100%">キャンセル</button>`);
+}
+/* ---------- イベント ---------- */
+document.addEventListener('click', async e => {
+  const b = e.target.closest('[data-a]'); if(!b || b.disabled) return;
+  const a = b.dataset.a, v = b.dataset.v;
+  const seg = curSeg();
+  switch(a){
+    case 'zone': act(()=>{ seg.zones[b.dataset.g] = v; }); break;
+    case 'eyeOpen': eyeModal(); break;
+    case 'eyeAdd': act(()=>{ seg.eye.push({id:v, t:Date.now()}); }); closeModal(); toast('アイキャッチを記録'); break;
+    case 'eyeDel': act(()=>{ seg.eye.splice(Number(b.dataset.i),1); }); break;
+    case 'czSet': act(()=>{
+      const tgt = b.dataset.t==='cz' ? seg.cz : S.draft;
+      tgt[b.dataset.f] = v;
+      if(b.dataset.f==='trigger' && v==='rare' && !tgt.range) tgt.range = ENGINE.rareRangeDefault(Object.assign({}, seg, {cz:null}));
+      if(b.dataset.t==='cz' && b.dataset.f==='result'){
+        if(v==='ok' && !seg.at) seg.at = Object.assign(newAT(false), {ended:true});
+        if(v==='ng' && !seg.cz.card) seg.cz.card = 'none';
+      }
+    }); break;
+    case 'czG': act(()=>{ const tgt = b.dataset.t==='cz' ? seg.cz : S.draft, g = Number(b.dataset.g); const i = tgt.gs.indexOf(g); i<0 ? tgt.gs.push(g) : tgt.gs.splice(i,1); }); break;
+    case 'czCommit':
+      if(S.draft.trigger==='rare' && !S.draft.range) S.draft.range = ENGINE.rareRangeDefault(Object.assign({}, seg, {cz:null}));
+      if(v==='ok'){ pendAT = {kind:'cz'}; atStartModal('CZ成功 → ATの種類'); }
+      else cardModal();
+      break;
+    case 'asa': act(()=>{ S.asa = v==='1'; }); break;
+    case 'routeCommit': pendAT = {kind:'route', v}; atStartModal(K.ROUTES[v]+' → ATの種類'); break;
+    case 'atStart': {
+      const ura = v==='1', p = pendAT; closeModal();
+      if(p && p.kind==='judge'){ act(()=>{ seg.at.sets.push({k:'judge', ok:true, ura}); }); toast('ジャッジメント成功 → '+(ura?'裏AT':'通常AT')); break; }
+      act(()=>{
+        if(p && p.kind==='route'){
+          const dr = S.draft, rv = p.v;
+          if(dr.trigger==='rare' && !dr.range) dr.range = ENGINE.rareRangeDefault(Object.assign({}, seg, {cz:null}));
+          seg.cz = rv==='hiki' ? {route:rv, type:null, trigger:'none', gs:[], range:'', result:'ok', card:null}
+                               : {route:rv, type:null, trigger:dr.trigger, gs:dr.gs.slice(), range:dr.range, pre:dr.pre, state:dr.state, role:dr.role, result:'ok', card:null};
+        }else{
+          if(S.draft.trigger==='rare' && !S.draft.range) S.draft.range = ENGINE.rareRangeDefault(Object.assign({}, seg, {cz:null}));
+          seg.cz = Object.assign({}, S.draft, {result:'ok', card:null});
+        }
+        seg.at = newAT(ura); S.draft = newDraft(); S.sel = null;
+      });
+      toast((ura?'裏AT':'通常AT')+'突入');
+      break; }
+    case 'cardPick': act(()=>{ seg.cz = Object.assign({}, S.draft, {result:'ng', card:v}); S.draft = newDraft(); S.segs.push(newSeg()); S.sel = null; }); closeModal(); toast('CZ失敗を記録 → 次の区間へ'); break;
+    case 'edStart': act(()=>{ seg.at.ending = true; seg.at.ed = seg.at.ed || {}; }); break;
+    case 'edCancel': act(()=>{ seg.at.ending = false; seg.at.ed = {}; }); break;
+    case 'edCnt': act(()=>{ const id = b.dataset.id; seg.at.ed[id] = Math.max(0, (seg.at.ed[id]||0) + Number(v)); }); break;
+    case 'atCnt': act(()=>{ seg.at[b.dataset.f] = Math.max(0, seg.at[b.dataset.f] + Number(v)); }); break;
+    case 'atEndAsk':
+      if(judgeRights(seg.at) > 0) modal(`<h4>有馬貴将ジャッジメント</h4><div class="grid2"><button class="big-btn okb" data-a="judge" data-v="ok">成功<br>→ CCGの死神 → AT</button><button class="big-btn ngb" data-a="judge" data-v="ng">失敗<br>→ AT終了</button></div><button data-a="close" style="width:100%;margin-top:10px">キャンセル</button>`);
+      else endScreenModal('normal');
+      break;
+    case 'judge':
+      if(v==='ok'){ pendAT = {kind:'judge'}; atStartModal('ジャッジメント成功 → ATの種類'); }
+      else { act(()=>{ seg.at.sets.push({k:'judge', ok:false}); }); endScreenModal('arima'); }
+      break;
+    case 'judgeDel': act(()=>{ seg.at.sets.splice(Number(b.dataset.i),1); }); break;
+    case 'oppPick': act(()=>{ seg.at.sets.push({k:'set', opp:v, res:null, bites:null, lose:0}); }); break;
+    case 'loseBattle': act(()=>{ const o = lastOpenSet(seg.at); o.lose = (o.lose||0)+1; }); break;
+    case 'winArima': act(()=>{ lastOpenSet(seg.at).res = 'arima'; }); break;
+    case 'winBites': bitesTmp = {si:seg.at.sets.length-1, tbl:null, stage:null, edit:false}; bitesModal(); break;
+    case 'setEdit': setModal(Number(b.dataset.i)); break;
+    case 'setOpp': act(()=>{ seg.at.sets[Number(b.dataset.i)].opp = v; }); setModal(Number(b.dataset.i)); break;
+    case 'setLose': act(()=>{ const x = seg.at.sets[Number(b.dataset.i)]; x.lose = Math.max(0,(x.lose||0)+Number(v)); }); setModal(Number(b.dataset.i)); break;
+    case 'setBites': { const i = Number(b.dataset.i), x = seg.at.sets[i]; bitesTmp = {si:i, tbl:x.bites?x.bites.tbl:null, stage:x.bites?x.bites.stage:null, edit:!!x.bites}; bitesModal(); break; }
+    case 'setArima': act(()=>{ const x = seg.at.sets[Number(b.dataset.i)]; x.res = 'arima'; x.bites = null; x.opp = 'arima'; }); closeModal(); break;
+    case 'setClear': act(()=>{ const x = seg.at.sets[Number(b.dataset.i)]; x.res = null; x.bites = null; }); closeModal(); break;
+    case 'setDel': act(()=>{ seg.at.sets.splice(Number(b.dataset.i),1); }); closeModal(); break;
+    case 'atEndPick': act(()=>{ seg.at.endScreen = v; seg.at.ended = true; seg.at.arima = b.dataset.k==='arima'; if(curIdx()===S.segs.length-1) S.segs.push(newSeg()); S.sel = null; }); closeModal(); toast('AT終了 → 次の区間へ'); break;
+    case 'bitesTbl': bitesTmp.tbl = v; bitesTmp.stage = null; bitesModal(); break;
+    case 'bitesStage': bitesTmp.stage = Number(v); bitesModal(); break;
+    case 'bitesSave': act(()=>{ const x = seg.at.sets[bitesTmp.si]; x.bites = {tbl:bitesTmp.tbl, stage:bitesTmp.stage}; x.res = 'bites'; }); closeModal(); break;
+    case 'bitesDel': act(()=>{ const x = seg.at.sets[bitesTmp.si]; x.bites = null; x.res = null; }); closeModal(); break;
+    case 'sel': S.sel = Number(b.dataset.i); save(); render(); window.scrollTo({top:0,behavior:'smooth'}); break;
+    case 'selCur': S.sel = null; save(); render(); break;
+    case 'segDelAsk': modal(`<h4>区間${Number(b.dataset.i)+1}を削除しますか？</h4><p class="muted">この区間の前兆・招待状・アイキャッチ・CZ・AT記録がすべて消え、以降の区間は再計算されます。</p><div class="grid2"><button data-a="close">やめる</button><button class="ngb" data-a="segDel" data-i="${b.dataset.i}">削除する</button></div>`); break;
+    case 'segDel': act(()=>{ S.segs.splice(Number(b.dataset.i),1); if(!S.segs.length) S.segs.push(newSeg()); S.sel = null; }); closeModal(); break;
+    case 'undo': if(undoStack.length){ S = JSON.parse(undoStack.pop()); save(); render(); } break;
+    case 'copy': { const t = textOut(); try{ await navigator.clipboard.writeText(t); toast('コピーしました'); }catch(err){ modal(`<h4>テキスト</h4><p class="muted">長押しでコピーしてください</p><textarea readonly>${esc(t)}</textarea><button data-a="close" style="width:100%">閉じる</button>`); } break; }
+    case 'menu': modal(`<h4>その他</h4>
+      <button class="opt" data-a="export"><b>JSONエクスポート</b><small>データをバックアップ・別端末へ移す</small></button>
+      <button class="opt" data-a="importOpen"><b>JSONインポート</b><small>エクスポートしたデータを読み込む（今のデータは上書き）</small></button>
+      <button class="opt" data-a="clearAsk" style="border-color:var(--ng)"><b style="color:var(--ng)">全データ消去</b><small>実戦記録をすべて消します</small></button>
+      <button data-a="close" style="width:100%">閉じる</button>`); break;
+    case 'export': { const t = JSON.stringify(S); modal(`<h4>JSONエクスポート</h4><textarea readonly id="expT">${esc(t)}</textarea><div class="grid2"><button data-a="close">閉じる</button><button data-a="expCopy">コピー</button></div>`); break; }
+    case 'expCopy': try{ await navigator.clipboard.writeText(JSON.stringify(S)); toast('コピーしました'); }catch(err){ toast('長押しでコピーしてください'); } break;
+    case 'importOpen': modal(`<h4>JSONインポート</h4><textarea id="impT" placeholder="エクスポートしたJSONを貼り付け"></textarea><div class="grid2"><button data-a="close">やめる</button><button class="okb" data-a="importDo">読み込む</button></div>`); break;
+    case 'importDo': try{ const o = JSON.parse(document.getElementById('impT').value); if(!o || !Array.isArray(o.segs)) throw 0; act(()=>{ S = migrate(Object.assign(blank(), o)); }); closeModal(); toast('読み込みました'); }catch(err){ toast('JSONを読み込めませんでした'); } break;
+    case 'clearAsk': modal(`<h4>すべてのデータを消去しますか？</h4><p class="muted">実戦情報・全区間の記録が消えます（「1つ戻す」で取り消しは可能です）。</p><div class="grid2"><button data-a="close">やめる</button><button class="ngb" data-a="clear">消去する</button></div>`); break;
+    case 'clear': act(()=>{ S = blank(); }); closeModal(); toast('消去しました'); break;
+    case 'close': closeModal(); break;
+  }
+});
+document.getElementById('modal').addEventListener('click', e => { if(e.target.id==='modal') closeModal(); });
+document.addEventListener('input', e => {
+  const t = e.target;
+  if(t.dataset.m){ S.meta[t.dataset.m] = t.value; save(); }
+  if(t.dataset.c==='czRange'){ const tgt = t.dataset.t==='cz' ? curSeg().cz : S.draft; tgt.range = t.value; save(); }
+});
+document.addEventListener('change', e => {
+  const t = e.target, seg = curSeg(), c = t.dataset.c;
+  if(c==='inv') act(()=>{ const g = Number(t.dataset.g); seg.inv = seg.inv.filter(x=>x.g!==g); if(t.value) seg.inv.push({g, id:t.value}); });
+  if(c==='firstHint') act(()=>{ S.firstHint = t.value; });
+  if(c==='czCard') act(()=>{ seg.cz.card = t.value; });
+  if(c==='czRange') render();
+  if(c==='atEndScreen') act(()=>{ seg.at.endScreen = t.value; });
+});
+render();
+</script>
+</body>
+</html>
